@@ -1479,10 +1479,10 @@ window.notifyMissionComplete = function(missionTitle) {
 
 <!-- 우측 하단 쿠로미 메시지 버튼 -->
 <div class="chat-btn-container">
-    <button class="chat-open-btn" onclick="openChat()">✉️ 쿠로미 메시지함 열기</button>
+    <button class="chat-open-btn" onclick="openChat()">✉️ 쿠로미 메시지함 열기1</button>
 </div>
 
-<!-- 쿠로미 대화함 팝업 모달창 (절대 위치 고정 레이아웃 - 버튼 잘림 원천 차단) -->
+<!-- 쿠로미 대화함 팝업 모달창 (테이블 레이아웃 - 모바일 버튼 잘림 원천 차단) -->
 <div id="chatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 10000; justify-content: center; align-items: center; box-sizing: border-box; padding: 10px;">
     <div style="background: white; width: 94%; max-width: 350px; height: 75vh; max-height: 420px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box;">
         
@@ -1497,12 +1497,18 @@ window.notifyMissionComplete = function(missionTitle) {
             <div style="text-align: center; color: #888; font-size: 13px; margin-top: 10px;">메시지함을 불러오는 중입니다...</div>
         </div>
 
-        <!-- 입력 및 전송 영역 (절대 위치 고정 구조) -->
-        <div style="padding: 10px 12px; background: white; border-top: 1px solid #eee; flex-shrink: 0; box-sizing: border-box; width: 100%;">
-            <div style="position: relative; width: 100%; padding-right: 74px; box-sizing: border-box;">
-                <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." style="width: 100%; height: 38px; padding: 0 10px; border: 1px solid #ddd; border-radius: 10px; outline: none; font-size: 13px; box-sizing: border-box;" onkeypress="if(event.key==='Enter') sendChatMessage()">
-                <button onclick="sendChatMessage()" style="position: absolute; right: 0; top: 0; width: 68px; height: 38px; background: #a855f7; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 13px; box-sizing: border-box; white-space: nowrap;">전송</button>
-            </div>
+        <!-- 입력 및 전송 영역 (테이블 구조로 버튼이 절대 밀리지 않음) -->
+        <div style="padding: 8px 10px; background: white; border-top: 1px solid #eee; flex-shrink: 0; box-sizing: border-box; width: 100%;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding-right: 6px;">
+                        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." style="width: 100%; height: 38px; padding: 0 10px; border: 1px solid #ddd; border-radius: 10px; outline: none; font-size: 13px; box-sizing: border-box;" onkeypress="if(event.key==='Enter') sendChatMessage()">
+                    </td>
+                    <td style="width: 65px; white-space: nowrap;">
+                        <button onclick="sendChatMessage()" style="width: 100%; height: 38px; background: #a855f7; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 13px; box-sizing: border-box;">전송</button>
+                    </td>
+                </tr>
+            </table>
         </div>
 
     </div>
