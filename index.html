@@ -335,4 +335,233 @@
 
             <div class="flex space-x-2">
                 <button onclick="closeParentResetModal()" class="flex-1 py-1.5 bg-gray-100 text-gray-600 rounded-xl font-jua text-xs">취소</button>
-                <button onclick="executePinReset()" class="flex-1 py-1.5 bg-pink-500 text-white rounded-xl font-jua text-xs
+                <button onclick="executePinReset()" class="flex-1 py-1.5 bg-pink-500 text-white rounded-xl font-jua text-xs shadow">재설정 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Add New Task with Custom Points -->
+    <div id="add-task-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-2 border-purple-200">
+            <div class="flex justify-between items-center mb-2.5">
+                <h3 class="font-jua text-purple-900 text-xs">✨ 학습 목표 추가</h3>
+                <button onclick="closeAddTaskModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xs"></i></button>
+            </div>
+            
+            <p class="text-[11px] text-purple-500 font-jua mb-1">추천 항목:</p>
+            <div class="flex flex-wrap gap-1 mb-2.5">
+                <button onclick="applyPreset('📖 독서 20분 읽기', 10)" class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg">📖 독서(10P)</button>
+                <button onclick="applyPreset('✏️ 수학 문제집 2장', 15)" class="text-[10px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded-lg">✏️ 수학(15P)</button>
+                <button onclick="applyPreset('📚 영단어 10개 외우기', 10)" class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg">📚 영어(10P)</button>
+                <button onclick="applyPreset('🎹 예체능 연습하기', 20)" class="text-[10px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded-lg">🎹 예체능(20P)</button>
+            </div>
+
+            <!-- Custom Title Input -->
+            <input type="text" id="custom-task-input" placeholder="공부할 내용을 적어주세요!" class="w-full border-2 border-purple-100 rounded-xl p-2 text-xs focus:outline-none focus:border-purple-400 mb-2.5 font-dodum">
+
+            <!-- Reward Points Selector -->
+            <div class="bg-purple-50 p-2 rounded-xl border border-purple-100 mb-3">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[11px] font-jua text-purple-900">⭐ 보상 포인트 설정:</span>
+                    <span id="point-preset-display" class="font-jua text-xs text-pink-500 font-bold">10 P</span>
+                </div>
+                <div class="flex space-x-1 mb-2">
+                    <button type="button" onclick="setPointPreset(5)" class="preset-btn flex-1 py-1 rounded-lg bg-white border border-purple-200 text-[10px] font-jua text-purple-700">5P</button>
+                    <button type="button" onclick="setPointPreset(10)" class="preset-btn flex-1 py-1 rounded-lg bg-purple-600 text-white border border-purple-600 text-[10px] font-jua">10P</button>
+                    <button type="button" onclick="setPointPreset(15)" class="preset-btn flex-1 py-1 rounded-lg bg-white border border-purple-200 text-[10px] font-jua text-purple-700">15P</button>
+                    <button type="button" onclick="setPointPreset(20)" class="preset-btn flex-1 py-1 rounded-lg bg-white border border-purple-200 text-[10px] font-jua text-purple-700">20P</button>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <span class="text-[10px] text-gray-500 font-jua">포인트 직접입력:</span>
+                    <input type="number" id="custom-task-points" value="10" min="1" max="100" class="w-16 border border-purple-200 rounded-lg p-0.5 text-center text-xs font-jua focus:outline-none focus:border-purple-500 bg-white" oninput="updatePointDisplay(this.value)">
+                    <span class="text-[10px] font-jua text-purple-800">P</span>
+                </div>
+            </div>
+
+            <div class="flex space-x-2">
+                <button onclick="closeAddTaskModal()" class="flex-1 py-1.5 bg-gray-100 rounded-xl text-gray-600 font-jua text-xs">취소</button>
+                <button onclick="saveNewTask()" class="flex-1 py-1.5 bg-gradient-to-r from-pink-400 to-purple-500 text-white rounded-xl font-jua text-xs shadow">추가하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 5: Firebase Online DB Configuration -->
+    <div id="cloud-config-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-purple-400 space-y-3 text-left">
+            <div class="text-center">
+                <span class="text-2xl">☁️</span>
+                <h3 class="font-jua text-purple-900 text-xs">부모님 온라인 동기화 안내</h3>
+                <p class="text-[10px] text-gray-500 mt-0.5">앱은 **실시간 클라우드 DB**와 자동 연동되어 아이와 부모님의 스마트폰이 서로 자동 관찰·수정됩니다.</p>
+            </div>
+
+            <div class="bg-purple-50 p-2.5 rounded-xl border border-purple-200 text-[11px] text-purple-900 space-y-1 font-dodum">
+                <p class="font-bold text-pink-600">💡 연결 방법:</p>
+                <p>1. 아이폰과 부모님 폰에서 **동일한 프로필 이름과 PIN 비밀번호**로 접속하세요.</p>
+                <p>2. 실시간 데이터베이스가 자동으로 연결되어 멀리서도 체크/수정이 즉시 반영됩니다.</p>
+            </div>
+
+            <button onclick="closeCloudConfigModal()" class="w-full py-2 bg-purple-600 text-white font-jua text-xs rounded-xl shadow">확인 완료</button>
+        </div>
+    </div>
+
+    <!-- Notification Toast Popup -->
+    <div id="toast-message" class="fixed top-6 left-1/2 -translate-x-1/2 bg-purple-900/90 text-white px-3.5 py-1.5 rounded-full text-xs font-jua shadow-lg flex items-center space-x-2 z-50 pointer-events-none opacity-0 transition-opacity duration-300 border border-purple-300/50">
+        <span id="toast-icon">✨</span>
+        <span id="toast-text">10 포인트를 얻었어요!</span>
+    </div>
+
+    <!-- FIREBASE MODULE & APPLICATION LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        let db = null;
+        let auth = null;
+        let unsubscribeDoc = null;
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'kuromi-study-default';
+        
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBV_rnTIqxLquQAJ2i14S-Lin2y0bCIF3Q",
+            authDomain: "kuromi-app.firebaseapp.com",
+            projectId: "kuromi-app",
+            storageBucket: "kuromi-app.firebasestorage.app",
+            messagingSenderId: "713556925410",
+            appId: "1:713556925410:web:76ef2b7dcff8138ad637bb"
+        };
+
+        const SANRIO_SVGS = {
+            kuromi: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 80 80 Q 92 75, 88 62 Q 85 55, 92 50 L 95 56 L 90 52" fill="none" stroke="#2D2235" stroke-width="2.5"/><path d="M 12 52 C 12 20, 88 20, 88 52 C 88 78, 76 86, 50 86 C 24 86, 12 78, 12 52 Z" fill="#2D2235"/><path d="M 22 36 Q 4 12, 22 8 Q 32 18, 28 36 Z" fill="#2D2235"/><path d="M 78 36 Q 96 12, 78 8 Q 68 18, 72 36 Z" fill="#2D2235"/><circle cx="11" cy="11" r="5" fill="#F472B6"/><circle cx="89" cy="11" r="5" fill="#F472B6"/><ellipse cx="50" cy="58" rx="27" ry="21" fill="#FFFFFF"/><ellipse cx="37" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/><ellipse cx="63" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/><ellipse cx="50" cy="58" rx="1.5" ry="1.2" fill="#F472B6"/><path d="M 45 62 Q 50 66, 55 62" fill="none" stroke="#2D2235" stroke-width="1.8"/><circle cx="50" cy="31" r="7.5" fill="#F472B6"/></svg>`,
+            mymelody: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 16 52 C 16 26, 84 26, 84 52 C 84 78, 74 86, 50 86 C 26 86, 16 78, 16 52 Z" fill="#F472B6"/><path d="M 22 42 Q 8 6, 28 8 Q 38 20, 32 42 Z" fill="#F472B6"/><path d="M 78 42 Q 92 6, 72 8 Q 62 20, 68 42 Z" fill="#F472B6"/><ellipse cx="50" cy="58" rx="25" ry="20" fill="#FFFFFF"/><ellipse cx="38" cy="56" rx="3" ry="4.5" fill="#2D2235"/><ellipse cx="62" cy="56" rx="3" ry="4.5" fill="#2D2235"/><ellipse cx="50" cy="59" rx="2.2" ry="1.6" fill="#FEF08A"/><circle cx="30" cy="34" r="5" fill="#FFFFFF"/></svg>`,
+            cinnamoroll: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 26 48 C 6 36, 0 68, 22 62 Z" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8"/><path d="M 74 48 C 94 36, 100 68, 78 62 Z" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8"/><ellipse cx="50" cy="52" rx="31" ry="22" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8"/><ellipse cx="36" cy="50" rx="3.2" ry="4.8" fill="#3B82F6"/><ellipse cx="64" cy="50" rx="3.2" ry="4.8" fill="#3B82F6"/><ellipse cx="27" cy="55" rx="4.5" ry="2.8" fill="#F472B6" opacity="0.6"/><ellipse cx="73" cy="55" rx="4.5" ry="2.8" fill="#F472B6" opacity="0.6"/></svg>`,
+            pompompurin: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="54" rx="32" ry="26" fill="#FEF08A"/><path d="M 36 30 C 36 20, 64 20, 64 30 Z" fill="#78350F"/><circle cx="38" cy="52" r="3" fill="#78350F"/><circle cx="62" cy="52" r="3" fill="#78350F"/><ellipse cx="50" cy="56" rx="2.5" ry="1.8" fill="#78350F"/></svg>`,
+            pochacco: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 22 32 C 12 20, 8 48, 22 52 Z" fill="#2D2235"/><path d="M 78 32 C 88 20, 92 48, 78 52 Z" fill="#2D2235"/><ellipse cx="50" cy="52" rx="28" ry="23" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8"/><ellipse cx="36" cy="50" rx="2.8" ry="4.2" fill="#2D2235"/><ellipse cx="64" cy="50" rx="2.8" ry="4.2" fill="#2D2235"/><ellipse cx="50" cy="55" rx="3.2" ry="2.2" fill="#2D2235"/></svg>`
+        };
+
+        const CHARACTERS = [
+            { id: 'kuromi', name: '쿠로미', cost: 0, speech: '"오늘도 대단해! 쿠로미가 항상 응원할게! 🖤"' },
+            { id: 'mymelody', name: '마이멜로디', cost: 100, speech: '"차근차근 해내다니 정말 대견해! 🌸"' },
+            { id: 'cinnamoroll', name: '시나모롤', cost: 150, speech: '"구름 위를 날아오르는 것처럼 잘하고 있어! ☁️"' },
+            { id: 'pompompurin', name: '폼폼푸린', cost: 200, speech: '"매일 조금씩 달콤하게 발전하는 중! 🍮"' },
+            { id: 'pochacco', name: '포차코', cost: 250, speech: '"신나게 같이 공부하자! 파이팅! 🐶"' }
+        ];
+
+        const DEFAULT_TASKS = [
+            { title: '📖 동화책이나 공부책 20분 읽기', points: 10 },
+            { title: '✏️ 수학 문제집 2장 풀기', points: 15 },
+            { title: '📚 영어 단어 10개 외우기', points: 10 },
+            { title: '🎹 예체능/악기 연습하기', points: 20 }
+        ];
+
+        window.currentProfileName = '';
+        window.profileList = [];
+        window.targetLoginProfile = '';
+        window.currentQuizAnswer = 0;
+        window.isParentMode = false;
+
+        window.state = {
+            pin: '0000',
+            points: 0,
+            activeCharacter: 'kuromi',
+            unlockedCharacters: ['kuromi'],
+            tasks: [],
+            history: {},
+            viewMonth: new Date()
+        };
+
+        function getTodayKey() {
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        async function initFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                document.getElementById('sync-status-dot').className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+                document.getElementById('sync-status-text').innerText = "온라인 클라우드 실시간 연결됨";
+            } catch(e) {
+                console.warn("Firebase fallback to local storage mode", e);
+                document.getElementById('sync-status-dot').className = "w-2 h-2 rounded-full bg-amber-400";
+                document.getElementById('sync-status-text').innerText = "로컬 보관함 전용 모드";
+            }
+        }
+
+        function subscribeOnlineDoc(profileName) {
+            if (!db || !auth || !auth.currentUser) return;
+
+            if (unsubscribeDoc) unsubscribeDoc();
+
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profileName);
+
+            unsubscribeDoc = onSnapshot(docRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    window.state.pin = data.pin || window.state.pin;
+                    window.state.points = data.points ?? window.state.points;
+                    window.state.activeCharacter = data.activeCharacter || window.state.activeCharacter;
+                    window.state.unlockedCharacters = data.unlockedCharacters || window.state.unlockedCharacters;
+                    window.state.history = data.history || window.state.history;
+
+                    const todayKey = getTodayKey();
+                    if (window.state.history[todayKey]) {
+                        window.state.tasks = window.state.history[todayKey].tasks || [];
+                    }
+
+                    renderHeader();
+                    renderTasks();
+                    renderShop();
+                }
+            }, (err) => {
+                console.error("Firestore sync error:", err);
+            });
+        }
+
+        async function syncToOnlineCloud() {
+            if (!currentProfileName) return;
+
+            const todayKey = getTodayKey();
+            if (window.state.history[todayKey]) {
+                window.state.history[todayKey].tasks = window.state.tasks;
+            }
+            const storageKey = `sanrio_app_profile_${currentProfileName}`;
+            localStorage.setItem(storageKey, JSON.stringify({
+                pin: window.state.pin,
+                points: window.state.points,
+                activeCharacter: window.state.activeCharacter,
+                unlockedCharacters: window.state.unlockedCharacters,
+                history: window.state.history
+            }));
+
+            if (db && auth && auth.currentUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', currentProfileName);
+                    await setDoc(docRef, {
+                        pin: window.state.pin,
+                        points: window.state.points,
+                        activeCharacter: window.state.activeCharacter,
+                        unlockedCharacters: window.state.unlockedCharacters,
+                        history: window.state.history,
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
+                } catch(e) {
+                    console.error("Cloud push failed", e);
+                }
+            }
+        }
+
+        // ☁️ DB 컬렉션에서 프로필 목록 직접 스캔 (핸드폰/PC 양쪽 완벽 동기화)
+        window.loadProfiles = async function() {
+            window.profileList = [];
