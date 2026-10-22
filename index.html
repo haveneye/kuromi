@@ -1459,13 +1459,12 @@ window.notifyMissionComplete = function(missionTitle) {
     </div>
     
 
-
 <!-- 우측 하단 쿠로미 메시지 버튼 -->
 <div class="chat-btn-container">
-    <button class="chat-open-btn" onclick="openChat()">✉️ 쿠로미 메시지함 열기1</button>
+    <button class="chat-open-btn" onclick="openChat()">✉️ 쿠로미 메시지함 열기</button>
 </div>
 
-<!-- 쿠로미 대화함 팝업 모달창 (테이블 레이아웃 - 모바일 버튼 잘림 원천 차단) -->
+<!-- 쿠로미 대화함 팝업 모달창 (중복 제거 및 테이블 레이아웃 고정 버전) -->
 <div id="chatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 10000; justify-content: center; align-items: center; box-sizing: border-box; padding: 10px;">
     <div style="background: white; width: 94%; max-width: 350px; height: 75vh; max-height: 420px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box;">
         
@@ -1494,23 +1493,6 @@ window.notifyMissionComplete = function(missionTitle) {
             </table>
         </div>
 
-    </div>
-</div>
-
-    <!-- 쿠로미 대화함 팝업 (모달) - 앱 컨테이너 밖에 1개만 남기기 -->
-<div id="chatModal" class="chat-modal">
-    <div class="chat-box">
-        <div class="chat-header">
-            <span>💌 쿠로미 대화함</span>
-            <button onclick="closeChat()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
-        </div>
-        <div id="chatMessages" class="chat-messages">
-            <!-- 실시간 메시지가 들어오는 곳 -->
-        </div>
-        <div class="chat-input-area">
-            <input type="text" id="chatInput" class="chat-input" placeholder="메시지를 입력하세요..." onkeypress="if(event.key==='Enter') sendChatMessage()">
-            <button class="chat-send-btn" onclick="sendChatMessage()">전송</button>
-        </div>
     </div>
 </div>
     
