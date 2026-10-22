@@ -40,6 +40,7 @@
                 profiles: state.profiles,
                 lastUpdated: Date.now()
             });
+            saveDataToCloud();
         }
     }
         tailwind.config = {
@@ -468,7 +469,6 @@
                     lastUpdated: Date.now()
                 }).catch(err => console.error(err));
             }
-            saveDataToCloud();
         };
 
         // SANRIO SVGS
