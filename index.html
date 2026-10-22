@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>쿠로미 학습 습관 매니저</title>
+    <title>쿠로미와 함께하는 학습 습관</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Canvas Confetti CDN -->
@@ -21,101 +21,165 @@
             font-family: 'Jua', sans-serif;
         }
         
+        .bg-kuromi-light { background-color: #f5f3ff; }
         .bg-kuromi-card { background-color: #ffffff; }
-        .border-kuromi { border-color: #f472b6; }
-        .text-kuromi { color: #8b5cf6; }
-        .bg-kuromi-btn { background-color: #c084fc; }
-        .bg-kuromi-btn:hover { background-color: #a855f7; }
+        .border-kuromi { border-color: #c084fc; }
+        .text-kuromi { color: #7e22ce; }
+        .bg-kuromi-btn { background-color: #a855f7; }
+        .bg-kuromi-btn:hover { background-color: #9333ea; }
         
         .bounce-short {
             animation: bounce 0.6s ease infinite alternate;
         }
         @keyframes bounce {
             0% { transform: translateY(0); }
-            100% { transform: translateY(-6px); }
+            100% { transform: translateY(-8px); }
         }
 
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #f472b6; border-radius: 10px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #c084fc; border-radius: 10px; }
     </style>
 </head>
-<body class="min-h-screen pb-12 text-gray-800 select-none bg-pink-100">
+<body class="min-h-screen pb-12 text-gray-800 select-none">
 
-    <!-- Top Header -->
-    <header class="bg-purple-900 text-white p-4 shadow-md sticky top-0 z-30 border-b-4 border-pink-300">
+    <!-- Top Navigation / Header -->
+    <header class="bg-purple-900 text-white p-4 shadow-md sticky top-0 z-30">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
-                <!-- Sanrio / Kuromi Graphic SVG -->
-                <svg class="w-9 h-9" viewBox="0 0 100 100">
-                    <path d="M50 15 C30 15 15 30 15 50 C15 70 30 85 50 85 C70 85 85 70 85 50 C85 30 70 15 50 15 Z" fill="#3b0764"/>
-                    <path d="M22 22 L8 2 L32 18 Z" fill="#3b0764"/>
-                    <path d="M78 22 L92 2 L68 18 Z" fill="#3b0764"/>
-                    <circle cx="36" cy="48" r="6" fill="#ffffff"/>
-                    <circle cx="64" cy="48" r="6" fill="#ffffff"/>
-                    <circle cx="37" cy="49" r="2.5" fill="#000000"/>
-                    <circle cx="63" cy="49" r="2.5" fill="#000000"/>
-                    <path d="M46 62 Q50 67 54 62" stroke="#f472b6" stroke-width="3" fill="none" stroke-linecap="round"/>
-                    <path d="M50 30 L54 36 L60 36 L55 40 L57 46 L50 42 L43 46 L45 40 L40 36 L46 36 Z" fill="#f472b6"/>
+                <!-- Kuromi Mini Logo SVG -->
+                <svg class="w-8 h-8 fill-current text-pink-400" viewBox="0 0 100 100">
+                    <path d="M50 15 C30 15 15 30 15 50 C15 70 30 85 50 85 C70 85 85 70 85 50 C85 30 70 15 50 15 Z" fill="#2e1065"/>
+                    <path d="M25 25 L10 5 L35 20 Z" fill="#2e1065"/>
+                    <path d="M75 25 L90 5 L65 20 Z" fill="#2e1065"/>
+                    <circle cx="38" cy="48" r="5" fill="#ffffff"/>
+                    <circle cx="62" cy="48" r="5" fill="#ffffff"/>
+                    <circle cx="39" cy="49" r="2" fill="#000000"/>
+                    <circle cx="61" cy="49" r="2" fill="#000000"/>
+                    <path d="M47 62 Q50 67 53 62" stroke="#f472b6" stroke-width="3" fill="none"/>
+                    <path d="M50 32 L54 38 L60 38 L55 42 L57 48 L50 44 L43 48 L45 42 L40 38 L46 38 Z" fill="#f472b6"/>
                 </svg>
-                <h1 class="font-jua text-2xl tracking-wide text-pink-200 drop-shadow">쿠로미 습관매니저</h1>
+                <h1 class="font-jua text-xl tracking-wide text-pink-300">쿠로미 습관매니저</h1>
             </div>
             
-            <div class="flex items-center space-x-1.5">
-                <button onclick="openDbConfigModal()" class="bg-purple-800 text-pink-200 text-xs px-2 py-1.5 rounded-xl border border-pink-400/50 hover:bg-purple-700 font-jua">
+            <div class="flex items-center space-x-2">
+                <!-- DB Config Button -->
+                <button onclick="openDbConfigModal()" class="bg-purple-800 text-pink-200 text-xs px-2.5 py-1.5 rounded-lg border border-purple-600 font-jua hover:bg-purple-700">
                     ⚙️ DB연동
                 </button>
-                <button id="parentToggleBtn" onclick="toggleParentMode()" class="bg-pink-500 text-white text-xs px-2.5 py-1.5 rounded-xl font-jua shadow hover:bg-pink-600">
-                    👨‍👩‍👧 부모모드
+                <!-- Parent Mode Toggle -->
+                <button id="parentToggleBtn" onclick="toggleParentMode()" class="bg-purple-800 text-xs px-2.5 py-1.5 rounded-lg border border-purple-600 font-jua text-pink-200">
+                    👨‍👩‍👧 부모모드: OFF
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- DB Status Banner -->
-    <div id="dbStatusBanner" class="bg-pink-200 text-purple-900 text-xs text-center py-1.5 px-2 font-bold border-b border-pink-300">
-        ⚠️ 데이터베이스 미연동 상태 (⚙️ DB연동 버튼을 눌러 설정값을 넣으면 실시간 연결됩니다)
+    <!-- Realtime Connection Status Bar -->
+    <div id="dbStatusBanner" class="bg-yellow-100 text-yellow-800 text-xs text-center py-1 px-2 font-medium border-b border-yellow-200">
+        ⚠️ 로컬 모드 사용 중 (⚙️ DB연동 버튼을 눌러 파이어베이스 값을 입력하면 엄마/아빠 폰과 실시간 연결됩니다)
     </div>
 
     <!-- Main Container -->
     <main class="max-w-md mx-auto p-4 space-y-4">
 
         <!-- Active Profile Card -->
-        <section class="bg-white rounded-3xl p-4 shadow-lg border-2 border-purple-200 flex items-center justify-between">
+        <section class="bg-white rounded-2xl p-4 shadow-sm border-2 border-purple-200 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div id="profileAvatar" class="w-14 h-14 rounded-full bg-purple-100 border-2 border-pink-300 flex items-center justify-center text-3xl shadow-inner">
+                <div id="profileAvatar" class="w-12 h-12 rounded-full bg-purple-100 border-2 border-purple-300 flex items-center justify-center text-2xl shadow-inner">
                     😈
                 </div>
                 <div>
-                    <div class="flex items-center gap-1.5">
-                        <span id="profileName" class="font-jua text-xl text-purple-950">프로필</span>
-                        <button onclick="openProfileSelector()" class="text-xs bg-pink-100 text-pink-600 font-bold px-2 py-0.5 rounded-full hover:bg-pink-200">변경</button>
+                    <div class="flex items-center gap-2">
+                        <span id="profileName" class="font-jua text-lg text-purple-950">프로필 선택 필요</span>
+                        <button onclick="openProfileSelector()" class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full hover:bg-purple-200 font-bold">변경</button>
                     </div>
-                    <p class="text-[11px] text-purple-400 font-medium" id="profileSubText">4자리 PIN 보호 중 🔒</p>
+                    <p class="text-xs text-gray-500" id="profileSubText">4자리 PIN으로 안전하게 보호됨</p>
                 </div>
             </div>
             <div class="text-right">
-                <span class="text-xs text-purple-500 font-bold block">내 포인트</span>
-                <span id="userPoints" class="font-jua text-3xl text-purple-700 drop-shadow-sm">0 P</span>
+                <span class="text-xs text-purple-600 font-bold block">보유 포인트</span>
+                <span id="userPoints" class="font-jua text-2xl text-purple-700">0 P</span>
             </div>
         </section>
 
-        <!-- Parent Notice Banner -->
-        <section id="parentNoticeBox" class="hidden bg-purple-900 text-white p-3 rounded-2xl text-xs space-y-1 shadow-md border-2 border-pink-300">
+        <!-- Parent Control Banner -->
+        <section id="parentNoticeBox" class="hidden bg-purple-900 text-white p-3 rounded-xl text-xs space-y-1 shadow-md border-2 border-pink-400">
             <div class="flex justify-between items-center">
-                <span class="font-jua text-pink-300 text-sm">👑 부모님 실시간 관리 모드</span>
-                <span class="bg-pink-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">수정 가능</span>
+                <span class="font-bold text-pink-300 text-sm">👑 부모님 실시간 관리 모드 활성화</span>
+                <span class="bg-pink-500 text-white text-[10px] px-1.5 py-0.5 rounded">실시간 수정 중</span>
             </div>
-            <p class="text-purple-200">할 일을 자유롭게 추가/삭제하거나 완수 여부를 대신 체크할 수 있습니다.</p>
+            <p class="text-purple-200">할 일을 직접 추가/삭제하거나 포인트를 임의로 보상할 수 있습니다.</p>
         </section>
 
         <!-- Tabs Navigation -->
-        <div class="flex bg-purple-200 p-1.5 rounded-2xl font-jua text-base shadow-inner text-purple-800">
-            <button id="tabBtn1" onclick="switchTab('habits')" class="flex-1 py-2 rounded-xl bg-white shadow text-purple-900 font-bold text-center transition-all">
+        <div class="flex bg-purple-200 p-1 rounded-xl font-jua text-sm text-purple-800">
+            <button id="tabBtn1" onclick="switchTab('habits')" class="flex-1 py-2 rounded-lg bg-white shadow text-purple-900 font-bold text-center">
                 📝 오늘 할 일
             </button>
-            <button id="tabBtn2" onclick="switchTab('shop')" class="flex-1 py-2 rounded-xl text-center hover:bg-white/50 transition-all">
+            <button id="tabBtn2" onclick="switchTab('shop')" class="flex-1 py-2 rounded-lg text-center hover:bg-white/50">
                 🛍️ 캐릭터 샵
             </button>
-            <button id="tabBtn3" onclick="switchTab('calendar')" class="flex-1 py-2 rounded-xl text-center hover:bg-white/50 transition-all">
+            <button id="tabBtn3" onclick="switchTab('calendar')" class="flex-1 py-2 rounded-lg text-center hover:bg-white/50">
                 📅 학습 달력
             </button>
+        </div>
+
+        <!-- TAB 1: HABITS & TASKS -->
+        <section id="tab-habits" class="space-y-3">
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-purple-100 space-y-2">
+                <div class="flex gap-2">
+                    <input type="text" id="newTaskInput" placeholder="새로운 공부나 할 일 입력..." class="flex-1 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-purple-500">
+                    <div class="flex items-center bg-purple-50 border border-purple-200 rounded-xl px-2">
+                        <input type="number" id="newTaskPoints" value="10" min="1" max="100" class="w-10 bg-transparent text-center text-sm font-bold text-purple-700 focus:outline-none">
+                        <span class="text-xs text-purple-500 font-bold pr-1">P</span>
+                    </div>
+                    <button onclick="addNewTask()" class="bg-purple-600 text-white px-4 py-2 rounded-xl font-jua text-sm hover:bg-purple-700 shadow-sm">
+                        추가
+                    </button>
+                </div>
+                <!-- Preset Buttons -->
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                    <span class="text-[11px] text-gray-400 self-center mr-1">추천:</span>
+                    <button onclick="addPresetTask('학교/학원 숙제하기', 10)" class="text-xs bg-pink-50 text-pink-600 px-2 py-1 rounded-lg border border-pink-200 hover:bg-pink-100">+ 숙제 10P</button>
+                    <button onclick="addPresetTask('책 20분 읽기', 15)" class="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-lg border border-purple-200 hover:bg-purple-100">+ 독서 15P</button>
+                    <button onclick="addPresetTask('일기 쓰기', 10)" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-100">+ 일기 10P</button>
+                    <button onclick="addPresetTask('방 정리하기', 5)" class="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-lg border border-green-200 hover:bg-green-100">+ 정리 5P</button>
+                </div>
+            </div>
+
+            <!-- Task List -->
+            <div id="taskList" class="space-y-2">
+                <!-- Dynamic tasks injected here -->
+            </div>
+        </section>
+
+        <!-- TAB 2: CHARACTER SHOP -->
+        <section id="tab-shop" class="hidden space-y-3">
+            <div class="bg-purple-100 p-3 rounded-xl text-xs text-purple-800 border border-purple-200 text-center font-medium">
+                ✨ 할 일을 완료해서 모은 포인트로 귀여운 산리오 친구들을 해금하세요!
+            </div>
+            <div id="shopGrid" class="grid grid-cols-2 gap-3">
+                <!-- Dynamic character cards injected here -->
+            </div>
+        </section>
+
+        <!-- TAB 3: CALENDAR & LOGS -->
+        <section id="tab-calendar" class="hidden space-y-3">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-purple-100 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-jua text-purple-900 text-base">📅 이번 달 학습 현황</h3>
+                    <span id="currentMonthStr" class="text-xs font-bold text-purple-600">진행 중</span>
+                </div>
+                
+                <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-400 pb-1">
+                    <div class="text-red-400">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-400">토</div>
+                </div>
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center text-xs">
+                    <!-- Dynamic calendar days injected here -->
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-purple-100 space-y-2">
+                <h4 class="font-jua text-sm text-purple-900">🏆 오늘의 습관 완성도</h4>
+                <div class="w-full bg-gray-100 h-4 rounded-full overflow-hidden border border-gray-200">
+                    <div id="progressBar" class="bg-gradient-to-r from-pink-400 to-purple-600 h-
