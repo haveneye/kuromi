@@ -1286,34 +1286,48 @@
         
 let unsubscribeMessages = null;
 
+// 🎯 프로필 이름을 언제나 정확하게 찾아주는 공통 함수
+function getActiveProfile() {
+    if (typeof currentProfile !== 'undefined' && currentProfile) return currentProfile;
+    if (window.currentProfile) return window.currentProfile;
+    
+    // HTML 화면이나 다른 변수에서 찾기
+    const profileEl = document.querySelector('.profile-name, #profileName, .active-profile, [data-profile]');
+    if (profileEl) {
+        return profileEl.innerText.trim() || profileEl.getAttribute('data-profile');
+    }
+    return "기본아이"; // 안전장치
+}
+
 // 1. 대화창 열기/닫기
 window.openChat = function() {
     const modal = document.getElementById('chatModal');
     if (modal) {
         modal.style.display = 'flex';
         window.listenMessages(); // 열릴 때 실시간 수신 시작
-    } else {
-        alert("대화창(chatModal)을 찾을 수 없습니다.");
     }
 };
 
 window.closeChat = function() {
     const modal = document.getElementById('chatModal');
     if (modal) modal.style.display = 'none';
-    if (window.unsubscribeMessages) window.unsubscribeMessages();
+    if (window.unsubscribeMessages) {
+        window.unsubscribeMessages();
+        window.unsubscribeMessages = null;
+    }
 };
 
 // 2. 실시간 메시지 수신 (리스닝 함수)
 window.listenMessages = function() {
-    let activeProfile = window.currentProfile || 
-                        (typeof currentProfile !== 'undefined' ? currentProfile : null) || 
-                        (typeof selectedProfile !== 'undefined' ? selectedProfile : null);
+    const activeProfile = getActiveProfile();
+    console.log("🔍 실시간 수신 연결된 프로필:", activeProfile);
 
-    if (!activeProfile) {
-        activeProfile = "기본아이"; // 프로필이 없을 때의 임시 안전장치
+    if (typeof db === 'undefined' || !activeProfile) return;
+
+    if (window.unsubscribeMessages) {
+        window.unsubscribeMessages();
+        window.unsubscribeMessages = null;
     }
-
-    if (window.unsubscribeMessages) window.unsubscribeMessages();
 
     try {
         const msgRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", activeProfile);
@@ -1354,18 +1368,17 @@ window.renderMessages = function(messages) {
         div.style.maxWidth = "75%";
         div.style.wordBreak = "break-word";
         
-        // 보낸 사람에 따른 말풍선 위치 및 색상 디자인
         if (msg.sender === 'parent') {
-            div.style.background = "#f3e8ff"; // 부모님 (연보라, 우측 정렬 느낌)
+            div.style.background = "#f3e8ff"; // 부모님 (연보라, 우측)
             div.style.marginLeft = "auto";
             div.style.borderBottomRightRadius = "2px";
         } else if (msg.sender === 'system') {
-            div.style.background = "#f1f5f9"; // 시스템 알림 (중앙)
+            div.style.background = "#f1f5f9"; // 시스템 (중앙)
             div.style.margin = "8px auto";
             div.style.textAlign = "center";
             div.style.maxWidth = "90%";
         } else {
-            div.style.background = "#ffffff"; // 아이 (흰색, 좌측 정렬)
+            div.style.background = "#ffffff"; // 아이 (흰색, 좌측)
             div.style.border = "1px solid #e2e8f0";
             div.style.marginRight = "auto";
             div.style.borderBottomLeftRadius = "2px";
@@ -1390,7 +1403,7 @@ window.renderMessages = function(messages) {
     container.scrollTop = container.scrollHeight; // 맨 아래로 스크롤
 };
 
-// 4. 메시지 전송 함수
+// 4. 메시지 전송 함수 (전송 즉시 실시간 반영)
 window.sendChatMessage = async function(customText = null, isSystem = false) {
     const input = document.getElementById('chatInput');
     const text = customText || (input ? input.value.trim() : '');
@@ -1400,10 +1413,7 @@ window.sendChatMessage = async function(customText = null, isSystem = false) {
         return;
     }
 
-    let activeProfile = window.currentProfile || 
-                        (typeof currentProfile !== 'undefined' ? currentProfile : null) || 
-                        (typeof selectedProfile !== 'undefined' ? selectedProfile : null) || 
-                        "기본아이";
+    const activeProfile = getActiveProfile();
 
     try {
         let sender = 'child';
@@ -1438,7 +1448,7 @@ window.sendChatMessage = async function(customText = null, isSystem = false) {
 
         if (input && !customText) input.value = '';
         
-        // 전송 후 데이터 즉시 새로고침 반영
+        // 🔥 전송 직후 수신 함수를 즉시 호출해서 화면에 바로 뜸!
         window.listenMessages();
 
     } catch (err) {
