@@ -1360,20 +1360,31 @@ window.renderMessages = function(messages) {
 };
 
 // 4. 메시지 전송 함수
+// 확실하게 동작하는 최종 메시지 전송 함수
 window.sendChatMessage = async function(customText = null, isSystem = false) {
     const input = document.getElementById('chatInput');
     const text = customText || (input ? input.value.trim() : '');
-
+    
+    // 1. 입력된 텍스트 확인
     if (!text) {
         alert("메시지를 입력해 주세요!");
         return;
     }
 
-    if (typeof db === 'undefined' || !currentProfile) {
-        alert("상단에서 프로필(아이 이름)을 먼저 선택해 주세요!");
+    // 2. 현재 프로필(아이 이름) 선택 여부 확인
+    const activeProfile = window.currentProfile || (typeof currentProfile !== 'undefined' ? currentProfile : null);
+    if (!activeProfile) {
+        alert("⚠️ 상단에서 아이 이름(프로필)을 먼저 선택해 주세요!");
         return;
     }
 
+    // 3. 파이어베이스 연결 확인
+    if (typeof db === 'undefined' || typeof doc === 'undefined') {
+        alert("⚠️ 데이터베이스 연결이 아직 준비되지 않았습니다. 페이지를 새로고침해 주세요.");
+        return;
+    }
+
+    // 4. 부모/아이 역할 선택
     let sender = 'child';
     let senderName = '👧 아이';
 
@@ -1396,7 +1407,7 @@ window.sendChatMessage = async function(customText = null, isSystem = false) {
     };
 
     try {
-        const docRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", currentProfile);
+        const docRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", activeProfile);
         const docSnap = await getDoc(docRef);
         let currentMsgs = [];
         
@@ -1405,13 +1416,17 @@ window.sendChatMessage = async function(customText = null, isSystem = false) {
         }
 
         currentMsgs.push(newMsg);
+        
+        // 파이어스토어에 저장
         await setDoc(docRef, { chatMessages: currentMsgs }, { merge: true });
 
+        // 입력창 비우기
         if (input && !customText) input.value = '';
+        console.log("메시지 전송 성공!");
 
     } catch (err) {
-        console.error("전송 에러:", err);
-        alert("메시지 전송에 실패했습니다: " + err.message);
+        console.error("전송 에러 상세:", err);
+        alert("메시지 전송 실패: " + err.message);
     }
 };
 
