@@ -62,14 +62,23 @@
 
         /* 쿠로미 메시지 모달 & UI 스타일 */
 .chat-btn-container {
+    width: 100%;
+    max-width: 100%;
     text-align: center;
-    margin: 15px 0;
+    margin: 20px 0 10px 0;
+    padding: 0 10px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
 }
+
 .chat-open-btn {
+    width: 100%;
+    max-width: 300px; /* 버튼이 앱 화면 폭에 맞춰 예쁘게 늘어남 */
     background: #a855f7;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 12px 20px;
     border-radius: 20px;
     font-weight: bold;
     font-size: 15px;
@@ -77,7 +86,10 @@
     box-shadow: 0 4px 10px rgba(168, 85, 247, 0.3);
     transition: transform 0.2s;
 }
-.chat-open-btn:active { transform: scale(0.95); }
+
+.chat-open-btn:active {
+    transform: scale(0.95);
+}
 
 .chat-modal {
     display: none;
