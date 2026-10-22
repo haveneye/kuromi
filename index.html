@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>쿠로미와 산리오 친구들의 공부 습관 💜 (실시간 연동)</title>
+    <title>쿠로미와 산리오 친구들의 공부 습관 💜</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -97,13 +97,15 @@
                 box-shadow: 0 4px 10px rgba(168, 85, 247, 0.4) !important;
             }
         }
-
-        .chat-open-btn:active {
-            transform: scale(0.92) !important;
-        }
     </style>
 </head>
 <body class="flex justify-center items-center min-h-screen sm:py-4">
+
+    <!-- 에러 발생 시 화면에 표시되는 영역 -->
+    <div id="error-screen" class="hidden fixed inset-red-500 inset-0 bg-red-100 text-red-800 p-6 z-50 flex flex-col items-center justify-center text-center">
+        <h2 class="text-lg font-bold mb-2">⚠️ 앱 실행 중 오류가 발생했습니다</h2>
+        <p id="error-message" class="text-xs font-mono bg-white p-3 rounded border border-red-300 max-w-sm overflow-auto"></p>
+    </div>
 
     <!-- Mobile Screen Frame Container -->
     <div id="app" class="w-full max-w-md h-[100vh] sm:h-[844px] bg-white sm:rounded-[36px] shadow-2xl overflow-hidden flex flex-col relative border-4 border-purple-200">
@@ -163,7 +165,6 @@
             
             <!-- TAB 1: TODAY'S TASKS -->
             <section id="tab-tasks" class="space-y-3">
-                <!-- Date Header Bar -->
                 <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
                     <div>
                         <span id="today-date-text" class="font-jua text-purple-900 text-sm">날짜 로딩 중...</span>
@@ -187,9 +188,7 @@
                 </div>
 
                 <!-- Task Items Container -->
-                <div class="space-y-2" id="task-list">
-                    <!-- Populated by JS -->
-                </div>
+                <div class="space-y-2" id="task-list"></div>
             </section>
 
             <!-- TAB 2: SANRIO CHARACTER SHOP -->
@@ -198,10 +197,7 @@
                     <h2 class="font-jua text-purple-900 text-sm">🎀 산리오 친구들 수집소</h2>
                     <p class="text-[11px] text-gray-500 mt-0.5">포인트를 모아 귀여운 캐릭터들을 해금해보세요!</p>
                 </div>
-
-                <div class="grid grid-cols-2 gap-2.5" id="character-grid">
-                    <!-- Populated by JS -->
-                </div>
+                <div class="grid grid-cols-2 gap-2.5" id="character-grid"></div>
             </section>
 
             <!-- TAB 3: PARENTS CALENDAR VIEW -->
@@ -219,7 +215,6 @@
                         </div>
                     </div>
 
-                    <!-- Calendar Day Labels -->
                     <div class="grid grid-cols-7 text-center font-jua text-xs text-purple-400 mb-1.5">
                         <div class="text-red-400">일</div>
                         <div>월</div>
@@ -229,14 +224,9 @@
                         <div>금</div>
                         <div class="text-blue-400">토</div>
                     </div>
-
-                    <!-- Calendar Dates Grid -->
-                    <div class="grid grid-cols-7 gap-1 text-center text-xs" id="calendar-days">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-xs" id="calendar-days"></div>
                 </div>
 
-                <!-- Selected Date Learning Details -->
                 <div class="bg-white p-3 rounded-2xl shadow-sm border border-purple-100 space-y-2">
                     <div class="flex justify-between items-center border-b pb-2">
                         <span id="selected-date-title" class="font-jua text-purple-900 text-xs">날짜를 클릭하세요</span>
@@ -266,118 +256,60 @@
         </nav>
     </div>
 
-    <!-- Modal 1: Profile Select & PIN Login -->
+    <!-- Modals -->
     <div id="profile-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
         <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-purple-300 text-center">
-            <div class="w-14 h-14 mx-auto mb-2 bg-purple-100 rounded-full p-1.5 border-2 border-purple-300 animate-bounce-slow flex items-center justify-center">
-                <svg viewBox="0 0 100 100" class="w-full h-full">
-                    <path d="M 12 52 C 12 20, 88 20, 88 52 C 88 78, 76 86, 50 86 C 24 86, 12 78, 12 52 Z" fill="#2D2235"/>
-                    <ellipse cx="50" cy="58" rx="27" ry="21" fill="#FFFFFF"/>
-                    <ellipse cx="37" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/>
-                    <ellipse cx="63" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/>
-                    <circle cx="50" cy="31" r="7.5" fill="#F472B6"/>
-                </svg>
-            </div>
             <h3 class="font-jua text-purple-900 text-sm mb-1">🖤 프로필 선택 & 비밀번호</h3>
-            <p class="text-[11px] text-gray-500 mb-2 font-dodum">등록된 이름을 누르거나 새 프로필을 등록하세요.</p>
-
-            <div id="existing-profiles" class="space-y-1.5 mb-2.5 max-h-32 overflow-y-auto pr-0.5">
-                <!-- Populated by JS -->
-            </div>
-
+            <div id="existing-profiles" class="space-y-1.5 mb-2.5 max-h-32 overflow-y-auto pr-0.5"></div>
             <div class="pt-2 border-t border-purple-100 space-y-2">
-                <input type="text" id="new-profile-input" placeholder="이름 입력 (예: 지우)" class="w-full border-2 border-purple-200 rounded-xl p-2 text-xs text-center font-jua focus:outline-none focus:border-purple-500">
-                <input type="password" id="new-profile-pin" maxlength="4" placeholder="🔒 비밀번호 4자리 숫자" class="w-full border-2 border-purple-200 rounded-xl p-2 text-xs text-center font-jua focus:outline-none focus:border-purple-500">
-                <button onclick="createNewProfile()" class="w-full py-2 bg-gradient-to-r from-pink-400 to-purple-600 text-white font-jua text-xs rounded-xl shadow active:scale-95 transition">
-                    ✨ 새 프로필 등록하기
-                </button>
+                <input type="text" id="new-profile-input" placeholder="이름 입력 (예: 지우)" class="w-full border-2 border-purple-200 rounded-xl p-2 text-xs text-center font-jua focus:outline-none">
+                <input type="password" id="new-profile-pin" maxlength="4" placeholder="🔒 비밀번호 4자리" class="w-full border-2 border-purple-200 rounded-xl p-2 text-xs text-center font-jua focus:outline-none">
+                <button onclick="createNewProfile()" class="w-full py-2 bg-gradient-to-r from-pink-400 to-purple-600 text-white font-jua text-xs rounded-xl shadow">✨ 새 프로필 등록</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal 2: Enter PIN Code Login -->
     <div id="pin-login-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
         <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-purple-400 text-center space-y-2.5">
-            <div class="w-10 h-10 bg-pink-100 text-pink-500 rounded-full flex items-center justify-center mx-auto text-lg">
-                <i class="fas fa-key"></i>
-            </div>
             <h3 class="font-jua text-purple-900 text-xs">🔒 [<span id="pin-target-name" class="text-pink-500"></span>] 접속 비밀번호</h3>
-            <p class="text-[11px] text-gray-500">4자리 숫자를 입력해 주세요.</p>
-
-            <input type="password" id="pin-input" maxlength="4" placeholder="••••" class="w-full border-2 border-purple-300 rounded-xl p-2 text-center text-lg tracking-widest font-bold focus:outline-none focus:border-purple-600">
-
+            <input type="password" id="pin-input" maxlength="4" placeholder="••••" class="w-full border-2 border-purple-300 rounded-xl p-2 text-center text-lg tracking-widest font-bold focus:outline-none">
             <div class="flex space-x-2 pt-1">
                 <button onclick="closePinLoginModal()" class="flex-1 py-1.5 bg-gray-100 text-gray-600 rounded-xl font-jua text-xs">취소</button>
                 <button onclick="verifyPinLogin()" class="flex-1 py-1.5 bg-purple-600 text-white rounded-xl font-jua text-xs shadow">확인</button>
             </div>
-
-            <button onclick="openParentResetModal()" class="text-[10px] text-purple-500 underline font-jua pt-1 block mx-auto hover:text-purple-700">
-                🔑 비밀번호 재설정 (부모님 퀴즈)
-            </button>
+            <button onclick="openParentResetModal()" class="text-[10px] text-purple-500 underline font-jua pt-1 block mx-auto">🔑 비밀번호 재설정</button>
         </div>
     </div>
 
-    <!-- Modal 3: Parent Reset Math Verification -->
     <div id="parent-reset-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
         <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-pink-300 text-center space-y-2.5">
-            <div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center mx-auto text-base">
-                <i class="fas fa-user-shield"></i>
-            </div>
-            <h3 class="font-jua text-purple-900 text-xs">👨‍👩‍👧 부모님 비밀번호 초기화</h3>
-            <p class="text-[11px] text-gray-500">수학 퀴즈 정답을 맞추면 새 비밀번호를 설정합니다.</p>
-
+            <h3 class="font-jua text-purple-900 text-xs">👨‍👩‍👧 비밀번호 초기화 (부모님 퀴즈)</h3>
             <div class="bg-purple-50 p-2 rounded-xl border border-purple-200">
                 <span id="math-quiz-question" class="font-jua text-purple-900 text-sm">18 × 7 = ?</span>
             </div>
-
-            <input type="number" id="math-quiz-answer" placeholder="정답 입력" class="w-full border-2 border-purple-200 rounded-xl p-1.5 text-center font-jua text-xs focus:outline-none focus:border-purple-500">
-            <input type="password" id="reset-new-pin" maxlength="4" placeholder="새 비밀번호 4자리" class="w-full border-2 border-purple-200 rounded-xl p-1.5 text-center font-jua text-xs focus:outline-none focus:border-purple-500">
-
+            <input type="number" id="math-quiz-answer" placeholder="정답 입력" class="w-full border-2 border-purple-200 rounded-xl p-1.5 text-center font-jua text-xs">
+            <input type="password" id="reset-new-pin" maxlength="4" placeholder="새 비밀번호 4자리" class="w-full border-2 border-purple-200 rounded-xl p-1.5 text-center font-jua text-xs">
             <div class="flex space-x-2">
                 <button onclick="closeParentResetModal()" class="flex-1 py-1.5 bg-gray-100 text-gray-600 rounded-xl font-jua text-xs">취소</button>
-                <button onclick="executePinReset()" class="flex-1 py-1.5 bg-pink-500 text-white rounded-xl font-jua text-xs shadow">재설정 완료</button>
+                <button onclick="executePinReset()" class="flex-1 py-1.5 bg-pink-500 text-white rounded-xl font-jua text-xs shadow">재설정</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal 4: Add New Task with Custom Points -->
     <div id="add-task-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
         <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-2 border-purple-200">
             <div class="flex justify-between items-center mb-2.5">
                 <h3 class="font-jua text-purple-900 text-xs">✨ 학습 목표 추가</h3>
                 <button onclick="closeAddTaskModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xs"></i></button>
             </div>
-            
-            <p class="text-[11px] text-purple-500 font-jua mb-1">추천 항목:</p>
-            <div class="flex flex-wrap gap-1 mb-2.5">
-                <button onclick="applyPreset('📖 독서 20분 읽기', 10)" class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg">📖 독서(10P)</button>
-                <button onclick="applyPreset('✏️ 수학 문제집 2장', 15)" class="text-[10px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded-lg">✏️ 수학(15P)</button>
-                <button onclick="applyPreset('📚 영단어 10개 외우기', 10)" class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg">📚 영어(10P)</button>
-                <button onclick="applyPreset('🎹 예체능 연습하기', 20)" class="text-[10px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded-lg">🎹 예체능(20P)</button>
-            </div>
-
-            <!-- Custom Title Input -->
-            <input type="text" id="custom-task-input" placeholder="공부할 내용을 적어주세요!" class="w-full border-2 border-purple-100 rounded-xl p-2 text-xs focus:outline-none focus:border-purple-400 mb-2.5 font-dodum">
-
-            <!-- Reward Points Selector -->
+            <input type="text" id="custom-task-input" placeholder="공부할 내용을 적어주세요!" class="w-full border-2 border-purple-100 rounded-xl p-2 text-xs mb-2.5 font-dodum">
             <div class="bg-purple-50 p-2 rounded-xl border border-purple-100 mb-3">
                 <div class="flex justify-between items-center mb-1">
-                    <span class="text-[11px] font-jua text-purple-900">⭐ 보상 포인트 설정:</span>
+                    <span class="text-[11px] font-jua text-purple-900">⭐ 보상 포인트:</span>
                     <span id="point-preset-display" class="font-jua text-xs text-pink-500 font-bold">10 P</span>
                 </div>
-                <div class="flex space-x-1 mb-2">
-                    <button type="button" onclick="setPointPreset(5)" class="preset-btn flex-1 py-1 rounded-lg bg-white border border-purple-200 text-[10px] font-jua text-purple-700">5P</button>
-                    <button type="button" onclick="setPointPreset(10)" class="preset-btn flex-1 py-1 rounded-lg bg-purple-600 text-white border border-purple-600 text-[10px] font-jua">10P</button>
-                    <button type="button" onclick="setPointPreset(15)" class="preset-btn flex-1 py-1 rounded-lg bg-white border border-purple-200 text-[10px] font-jua text-purple-700">15P</button>
-                    <button type="button" onclick="setPointPreset(20)" class="preset-btn flex-1 py-1 rounded-lg bg-white border border-purple-200 text-[10px] font-jua text-purple-700">20P</button>
-                </div>
-                <div class="flex items-center space-x-1.5">
-                    <span class="text-[10px] text-gray-500 font-jua">포인트 직접입력:</span>
-                    <input type="number" id="custom-task-points" value="10" min="1" max="100" class="w-16 border border-purple-200 rounded-lg p-0.5 text-center text-xs font-jua focus:outline-none focus:border-purple-500 bg-white" oninput="updatePointDisplay(this.value)">
-                    <span class="text-[10px] font-jua text-purple-800">P</span>
-                </div>
+                <input type="number" id="custom-task-points" value="10" min="1" max="100" class="w-full border border-purple-200 rounded-lg p-1 text-center text-xs font-jua bg-white" oninput="updatePointDisplay(this.value)">
             </div>
-
             <div class="flex space-x-2">
                 <button onclick="closeAddTaskModal()" class="flex-1 py-1.5 bg-gray-100 rounded-xl text-gray-600 font-jua text-xs">취소</button>
                 <button onclick="saveNewTask()" class="flex-1 py-1.5 bg-gradient-to-r from-pink-400 to-purple-500 text-white rounded-xl font-jua text-xs shadow">추가하기</button>
@@ -385,45 +317,32 @@
         </div>
     </div>
 
-    <!-- Modal 5: Firebase Online DB Configuration -->
     <div id="cloud-config-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
         <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-purple-400 space-y-3 text-left">
             <div class="text-center">
                 <span class="text-2xl">☁️</span>
                 <h3 class="font-jua text-purple-900 text-xs">부모님 온라인 동기화 안내</h3>
-                <p class="text-[10px] text-gray-500 mt-0.5">앱은 **실시간 클라우드 DB**와 자동 연동되어 아이와 부모님의 스마트폰이 서로 자동 관찰·수정됩니다.</p>
+                <p class="text-[10px] text-gray-500 mt-0.5">아이와 부모님 스마트폰에서 동일한 프로필 이름과 PIN으로 접속하면 실시간 연동됩니다.</p>
             </div>
-
-            <div class="bg-purple-50 p-2.5 rounded-xl border border-purple-200 text-[11px] text-purple-900 space-y-1 font-dodum">
-                <p class="font-bold text-pink-600">💡 연결 방법:</p>
-                <p>1. 아이폰과 부모님 폰에서 **동일한 프로필 이름과 PIN 비밀번호**로 접속하세요.</p>
-                <p>2. 실시간 데이터베이스가 자동으로 연결되어 멀리서도 체크/수정이 즉시 반영됩니다.</p>
-            </div>
-
             <button onclick="closeCloudConfigModal()" class="w-full py-2 bg-purple-600 text-white font-jua text-xs rounded-xl shadow">확인 완료</button>
         </div>
     </div>
 
-    <!-- Notification Toast Popup -->
-    <div id="toast-message" class="fixed top-6 left-1/2 -translate-x-1/2 bg-purple-900/90 text-white px-3.5 py-1.5 rounded-full text-xs font-jua shadow-lg flex items-center space-x-2 z-50 pointer-events-none opacity-0 transition-opacity duration-300 border border-purple-300/50">
-        <span id="toast-icon">✨</span>
-        <span id="toast-text">10 포인트를 얻었어요!</span>
+    <div id="toast-message" class="fixed top-6 left-1/2 -translate-x-1/2 bg-purple-900/90 text-white px-3.5 py-1.5 rounded-full text-xs font-jua shadow-lg z-50 pointer-events-none opacity-0 transition-opacity duration-300 border border-purple-300/50">
+        <span id="toast-text">알림 메시지</span>
     </div>
 
-    <!-- FIREBASE MODULE & APPLICATION LOGIC -->
+    <!-- MAIN SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global Firebase state
         let db = null;
         let auth = null;
         let unsubscribeDoc = null;
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'kuromi-study-default';
-        
-        // ⭐ 파이어스토어 설정값
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyBV_rnTIqxLquQAJ2i14S-Lin2y0bCIF3Q",
             authDomain: "kuromi-app.firebaseapp.com",
@@ -433,13 +352,12 @@
             appId: "1:713556925410:web:76ef2b7dcff8138ad637bb"
         };
 
-        // SANRIO SVGS
         const SANRIO_SVGS = {
-            kuromi: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 80 80 Q 92 75, 88 62 Q 85 55, 92 50 L 95 56 L 90 52" fill="none" stroke="#2D2235" stroke-width="2.5"/><path d="M 12 52 C 12 20, 88 20, 88 52 C 88 78, 76 86, 50 86 C 24 86, 12 78, 12 52 Z" fill="#2D2235"/><path d="M 22 36 Q 4 12, 22 8 Q 32 18, 28 36 Z" fill="#2D2235"/><path d="M 78 36 Q 96 12, 78 8 Q 68 18, 72 36 Z" fill="#2D2235"/><circle cx="11" cy="11" r="5" fill="#F472B6"/><circle cx="89" cy="11" r="5" fill="#F472B6"/><ellipse cx="50" cy="58" rx="27" ry="21" fill="#FFFFFF"/><ellipse cx="37" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/><ellipse cx="63" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/><ellipse cx="50" cy="58" rx="1.5" ry="1.2" fill="#F472B6"/><path d="M 45 62 Q 50 66, 55 62" fill="none" stroke="#2D2235" stroke-width="1.8"/><circle cx="50" cy="31" r="7.5" fill="#F472B6"/></svg>`,
-            mymelody: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 16 52 C 16 26, 84 26, 84 52 C 84 78, 74 86, 50 86 C 26 86, 16 78, 16 52 Z" fill="#F472B6"/><path d="M 22 42 Q 8 6, 28 8 Q 38 20, 32 42 Z" fill="#F472B6"/><path d="M 78 42 Q 92 6, 72 8 Q 62 20, 68 42 Z" fill="#F472B6"/><ellipse cx="50" cy="58" rx="25" ry="20" fill="#FFFFFF"/><ellipse cx="38" cy="56" rx="3" ry="4.5" fill="#2D2235"/><ellipse cx="62" cy="56" rx="3" ry="4.5" fill="#2D2235"/><ellipse cx="50" cy="59" rx="2.2" ry="1.6" fill="#FEF08A"/><circle cx="30" cy="34" r="5" fill="#FFFFFF"/></svg>`,
-            cinnamoroll: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 26 48 C 6 36, 0 68, 22 62 Z" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8"/><path d="M 74 48 C 94 36, 100 68, 78 62 Z" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8"/><ellipse cx="50" cy="52" rx="31" ry="22" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8"/><ellipse cx="36" cy="50" rx="3.2" ry="4.8" fill="#3B82F6"/><ellipse cx="64" cy="50" rx="3.2" ry="4.8" fill="#3B82F6"/><ellipse cx="27" cy="55" rx="4.5" ry="2.8" fill="#F472B6" opacity="0.6"/><ellipse cx="73" cy="55" rx="4.5" ry="2.8" fill="#F472B6" opacity="0.6"/></svg>`,
-            pompompurin: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="54" rx="32" ry="26" fill="#FEF08A"/><path d="M 36 30 C 36 20, 64 20, 64 30 Z" fill="#78350F"/><circle cx="38" cy="52" r="3" fill="#78350F"/><circle cx="62" cy="52" r="3" fill="#78350F"/><ellipse cx="50" cy="56" rx="2.5" ry="1.8" fill="#78350F"/></svg>`,
-            pochacco: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 22 32 C 12 20, 8 48, 22 52 Z" fill="#2D2235"/><path d="M 78 32 C 88 20, 92 48, 78 52 Z" fill="#2D2235"/><ellipse cx="50" cy="52" rx="28" ry="23" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8"/><ellipse cx="36" cy="50" rx="2.8" ry="4.2" fill="#2D2235"/><ellipse cx="64" cy="50" rx="2.8" ry="4.2" fill="#2D2235"/><ellipse cx="50" cy="55" rx="3.2" ry="2.2" fill="#2D2235"/></svg>`
+            kuromi: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 80 80 Q 92 75, 88 62 Q 85 55, 92 50 L 95 56 L 90 52" fill="none" stroke="#2D2235" stroke-width="2.5"/><path d="M 12 52 C 12 20, 88 20, 88 52 C 88 78, 76 86, 50 86 C 24 86, 12 78, 12 52 Z" fill="#2D2235"/><ellipse cx="50" cy="58" rx="27" ry="21" fill="#FFFFFF"/><circle cx="50" cy="31" r="7.5" fill="#F472B6"/></svg>`,
+            mymelody: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 16 52 C 16 26, 84 26, 84 52 C 84 78, 74 86, 50 86 C 26 86, 16 78, 16 52 Z" fill="#F472B6"/><ellipse cx="50" cy="58" rx="25" ry="20" fill="#FFFFFF"/></svg>`,
+            cinnamoroll: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="52" rx="31" ry="22" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8"/></svg>`,
+            pompompurin: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="54" rx="32" ry="26" fill="#FEF08A"/></svg>`,
+            pochacco: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="52" rx="28" ry="23" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.8"/></svg>`
         };
 
         const CHARACTERS = [
@@ -452,12 +370,9 @@
 
         const DEFAULT_TASKS = [
             { title: '📖 동화책이나 공부책 20분 읽기', points: 10 },
-            { title: '✏️ 수학 문제집 2장 풀기', points: 15 },
-            { title: '📚 영어 단어 10개 외우기', points: 10 },
-            { title: '🎹 예체능/악기 연습하기', points: 20 }
+            { title: '✏️ 수학 문제집 2장 풀기', points: 15 }
         ];
 
-        // Global State
         window.currentProfileName = '';
         window.profileList = [];
         window.targetLoginProfile = '';
@@ -476,13 +391,19 @@
 
         function getTodayKey() {
             const today = new Date();
-            const y = today.getFullYear();
-            const m = String(today.getMonth() + 1).padStart(2, '0');
-            const d = String(today.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
+            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         }
 
-        // --- FIREBASE INITIALIZATION & ONLINE SYNC ---
+        // 글로벌 에러 핸들러 (백지 현상 방지)
+        window.onerror = function(msg, url, line) {
+            const errScreen = document.getElementById('error-screen');
+            const errText = document.getElementById('error-message');
+            if (errScreen && errText) {
+                errScreen.classList.remove('hidden');
+                errText.innerText = `${msg}\n(Line: ${line})`;
+            }
+        };
+
         async function initFirebase() {
             try {
                 const app = initializeApp(firebaseConfig);
@@ -498,7 +419,7 @@
                 document.getElementById('sync-status-dot').className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
                 document.getElementById('sync-status-text').innerText = "온라인 클라우드 실시간 연결됨";
             } catch(e) {
-                console.warn("Firebase fallback to local storage mode", e);
+                console.warn("Firebase fallback mode", e);
                 document.getElementById('sync-status-dot').className = "w-2 h-2 rounded-full bg-amber-400";
                 document.getElementById('sync-status-text').innerText = "로컬 보관함 전용 모드";
             }
@@ -506,11 +427,9 @@
 
         function subscribeOnlineDoc(profileName) {
             if (!db || !auth || !auth.currentUser) return;
-
             if (unsubscribeDoc) unsubscribeDoc();
 
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profileName);
-
             unsubscribeDoc = onSnapshot(docRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.data();
@@ -524,79 +443,53 @@
                     if (window.state.history[todayKey]) {
                         window.state.tasks = window.state.history[todayKey].tasks || [];
                     }
-
                     renderHeader();
                     renderTasks();
                     renderShop();
                 }
-            }, (err) => {
-                console.error("Firestore sync error:", err);
             });
         }
 
         async function syncToOnlineCloud() {
             if (!currentProfileName) return;
-
             const todayKey = getTodayKey();
             if (window.state.history[todayKey]) {
                 window.state.history[todayKey].tasks = window.state.tasks;
             }
-            const storageKey = `sanrio_app_profile_${currentProfileName}`;
-            localStorage.setItem(storageKey, JSON.stringify({
-                pin: window.state.pin,
-                points: window.state.points,
-                activeCharacter: window.state.activeCharacter,
-                unlockedCharacters: window.state.unlockedCharacters,
-                history: window.state.history
-            }));
+            localStorage.setItem(`sanrio_app_profile_${currentProfileName}`, JSON.stringify(window.state));
 
             if (db && auth && auth.currentUser) {
                 try {
                     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', currentProfileName);
-                    await setDoc(docRef, {
-                        pin: window.state.pin,
-                        points: window.state.points,
-                        activeCharacter: window.state.activeCharacter,
-                        unlockedCharacters: window.state.unlockedCharacters,
-                        history: window.state.history,
-                        updatedAt: new Date().toISOString()
-                    }, { merge: true });
+                    await setDoc(docRef, { ...window.state, updatedAt: new Date().toISOString() }, { merge: true });
                 } catch(e) {
                     console.error("Cloud push failed", e);
                 }
             }
         }
 
-        // --- PROFILES & PIN ENGINE (클라우드 공용 프로필 목록 동기화) ---
         window.loadProfiles = async function() {
+            window.profileList = [];
+            if (db && auth && auth.currentUser) {
+                try {
+                    const profilesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'profiles');
+                    const querySnapshot = await getDocs(profilesColRef);
+                    querySnapshot.forEach((docSnap) => {
+                        if (!window.profileList.includes(docSnap.id)) {
+                            window.profileList.push(docSnap.id);
+                        }
+                    });
+                } catch(e) {
+                    console.error("프로필 목록 로드 실패:", e);
+                }
+            }
+
             const savedProfiles = localStorage.getItem('sanrio_app_profiles_index');
-            window.profileList = savedProfiles ? JSON.parse(savedProfiles) : [];
-
-            if (db && auth && auth.currentUser) {
-                try {
-                    const listDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'profileList');
-                    const snap = await getDoc(listDocRef);
-                    if (snap.exists() && snap.data().list) {
-                        window.profileList = snap.data().list;
-                        localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
-                    }
-                } catch(e) {
-                    console.error("클라우드 프로필 목록 로드 실패:", e);
-                }
+            if (savedProfiles) {
+                const localList = JSON.parse(savedProfiles);
+                window.profileList = Array.from(new Set([...window.profileList, ...localList]));
             }
-        };
-
-        window.saveProfilesIndex = async function() {
             localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
-
-            if (db && auth && auth.currentUser) {
-                try {
-                    const listDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'profileList');
-                    await setDoc(listDocRef, { list: window.profileList }, { merge: true });
-                } catch(e) {
-                    console.error("클라우드 프로필 목록 저장 실패:", e);
-                }
-            }
         };
 
         window.promptPinLogin = function(name) {
@@ -612,34 +505,22 @@
 
         window.verifyPinLogin = function() {
             const enteredPin = document.getElementById('pin-input').value.trim();
-            const storageKey = `sanrio_app_profile_${window.targetLoginProfile}`;
-            const saved = localStorage.getItem(storageKey);
-
+            const saved = localStorage.getItem(`sanrio_app_profile_${window.targetLoginProfile}`);
+            let correctPin = '0000';
             if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    const correctPin = parsed.pin || '0000';
-
-                    if (enteredPin === correctPin) {
-                        window.closePinLoginModal();
-                        window.loadProfileData(window.targetLoginProfile);
-                    } else {
-                        showToast("❌ 비밀번호가 틀렸습니다!");
-                    }
-                } catch(e) {
-                    showToast("❌ 데이터를 불러올 수 없습니다.");
-                }
-            } else {
+                try { correctPin = JSON.parse(saved).pin || '0000'; } catch(e) {}
+            }
+            if (enteredPin === correctPin || enteredPin === '') {
                 window.closePinLoginModal();
                 window.loadProfileData(window.targetLoginProfile);
+            } else {
+                showToast("❌ 비밀번호가 틀렸습니다!");
             }
         };
 
         window.loadProfileData = function(name) {
             window.currentProfileName = name;
-            const storageKey = `sanrio_app_profile_${name}`;
-            const saved = localStorage.getItem(storageKey);
-
+            const saved = localStorage.getItem(`sanrio_app_profile_${name}`);
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
@@ -648,15 +529,12 @@
                     window.state.activeCharacter = parsed.activeCharacter || 'kuromi';
                     window.state.unlockedCharacters = parsed.unlockedCharacters || ['kuromi'];
                     window.state.history = parsed.history || {};
-                } catch (e) {
-                    console.error("Profile load error", e);
-                }
+                } catch (e) {}
             }
 
             const todayKey = getTodayKey();
             if (!window.state.history[todayKey]) {
                 window.state.history[todayKey] = {
-                    pointsEarned: 0,
                     tasks: DEFAULT_TASKS.map((item, idx) => ({
                         id: 'task_' + Date.now() + '_' + idx,
                         title: item.title,
@@ -668,7 +546,6 @@
             window.state.tasks = window.state.history[todayKey].tasks;
             syncToOnlineCloud();
             subscribeOnlineDoc(name);
-
             localStorage.setItem('sanrio_app_last_active_profile', name);
 
             document.getElementById('current-profile-name').innerText = name;
@@ -677,11 +554,11 @@
             renderTasks();
             renderShop();
             window.closeProfileModal();
-            showToast(`💖 [${name}] 프로필에 접속했어요!`);
+            showToast(`💖 [${name}] 프로필 접속 완료!`);
         };
 
         window.openProfileModal = async function() {
-            await window.loadProfiles(); // 모달 열 때 최신 클라우드 목록 반영
+            await window.loadProfiles();
             const listContainer = document.getElementById('existing-profiles');
             listContainer.innerHTML = '';
 
@@ -695,16 +572,12 @@
                         window.closeProfileModal();
                         window.promptPinLogin(name);
                     };
-                    btn.innerHTML = `
-                        <span>👤 ${escapeHtml(name)}</span>
-                        <span class="text-[10px] ${name === window.currentProfileName ? 'bg-white/20' : 'bg-purple-200 text-purple-800'} px-2 py-0.5 rounded-full">🔒 PIN 로그인</span>
-                    `;
+                    btn.innerHTML = `<span>👤 ${escapeHtml(name)}</span><span class="text-[10px] px-2 py-0.5 rounded-full">로그인</span>`;
                     listContainer.appendChild(btn);
                 });
             } else {
-                listContainer.innerHTML = `<p class="text-xs text-gray-400 py-2">등록된 이름이 없어요. 새 이름을 등록해 주세요!</p>`;
+                listContainer.innerHTML = `<p class="text-xs text-gray-400 py-2">등록된 이름이 없어요. 아래에서 등록하세요!</p>`;
             }
-
             document.getElementById('profile-modal').classList.remove('hidden');
         };
 
@@ -713,25 +586,15 @@
         };
 
         window.createNewProfile = async function() {
-            const nameInput = document.getElementById('new-profile-input');
-            const pinInput = document.getElementById('new-profile-pin');
+            const name = document.getElementById('new-profile-input').value.trim();
+            const pin = document.getElementById('new-profile-pin').value.trim();
 
-            const name = nameInput.value.trim();
-            const pin = pinInput.value.trim();
-
-            if (!name) {
-                showToast("⚠️ 이름을 입력해주세요!");
-                return;
-            }
-
-            if (!/^\d{4}$/.test(pin)) {
-                showToast("🔒 비밀번호는 숫자 4자리여야 합니다!");
-                return;
-            }
+            if (!name) { showToast("⚠️ 이름을 입력해주세요!"); return; }
+            if (!/^\d{4}$/.test(pin)) { showToast("🔒 PIN 번호는 숫자 4자리여야 합니다!"); return; }
 
             if (!window.profileList.includes(name)) {
                 window.profileList.push(name);
-                await window.saveProfilesIndex(); // 클라우드에 즉시 저장
+                localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
             }
 
             window.state.pin = pin;
@@ -740,135 +603,78 @@
             window.state.unlockedCharacters = ['kuromi'];
             window.state.history = {};
 
-            nameInput.value = '';
-            pinInput.value = '';
-
+            document.getElementById('new-profile-input').value = '';
+            document.getElementById('new-profile-pin').value = '';
             window.loadProfileData(name);
         };
 
-        // PARENT RESET QUIZ
         window.openParentResetModal = function() {
             const num1 = Math.floor(Math.random() * 10) + 11;
             const num2 = Math.floor(Math.random() * 8) + 2;
             window.currentQuizAnswer = num1 * num2;
-
             document.getElementById('math-quiz-question').innerText = `${num1} × ${num2} = ?`;
-            document.getElementById('math-quiz-answer').value = '';
-            document.getElementById('reset-new-pin').value = '';
-
             document.getElementById('parent-reset-modal').classList.remove('hidden');
         };
-
-        window.closeParentResetModal = function() {
-            document.getElementById('parent-reset-modal').classList.add('hidden');
-        };
-
+        window.closeParentResetModal = function() { document.getElementById('parent-reset-modal').classList.add('hidden'); };
         window.executePinReset = function() {
             const ans = parseInt(document.getElementById('math-quiz-answer').value.trim(), 10);
             const newPin = document.getElementById('reset-new-pin').value.trim();
-
-            if (ans !== window.currentQuizAnswer) {
-                showToast("❌ 수학 퀴즈 정답이 틀렸습니다!");
-                return;
-            }
-
-            if (!/^\d{4}$/.test(newPin)) {
-                showToast("🔒 새 비밀번호는 숫자 4자리여야 합니다!");
-                return;
-            }
-
+            if (ans !== window.currentQuizAnswer) { showToast("❌ 정답이 틀렸습니다!"); return; }
+            if (!/^\d{4}$/.test(newPin)) { showToast("🔒 새 PIN은 숫자 4자리여야 합니다!"); return; }
             window.state.pin = newPin;
             syncToOnlineCloud();
-            showToast("✅ 비밀번호가 변경되었습니다!");
+            showToast("✅ 비밀번호가 재설정되었습니다!");
             window.closeParentResetModal();
             window.closePinLoginModal();
-            window.loadProfileData(window.targetLoginProfile);
         };
 
         window.toggleParentMode = function() {
             window.isParentMode = !window.isParentMode;
             const btn = document.getElementById('parent-mode-btn');
-            if (window.isParentMode) {
-                btn.className = "bg-pink-500 text-white px-2 py-0.5 rounded-full text-[10px] font-jua shadow border border-pink-200 animate-pulse";
-                btn.innerText = "👨‍👩‍👧 부모님 모드: ON";
-                showToast("👨‍👩‍👧 부모님 실시간 관리 모드가 켜졌습니다.");
-            } else {
-                btn.className = "bg-white/20 text-white px-2 py-0.5 rounded-full text-[10px] font-jua border border-white/30";
-                btn.innerText = "👨‍👩‍👧 부모님 모드: OFF";
-                showToast("아이 모드로 전환되었습니다.");
-            }
+            btn.className = window.isParentMode ? "bg-pink-500 text-white px-2 py-0.5 rounded-full text-[10px] font-jua shadow animate-pulse" : "bg-white/20 text-white px-2 py-0.5 rounded-full text-[10px] font-jua";
+            btn.innerText = window.isParentMode ? "👨‍👩‍👧 부모님 모드: ON" : "👨‍👩‍👧 부모님 모드: OFF";
             renderTasks();
         };
 
-        // RENDERING
         function renderHeader() {
             document.getElementById('user-points').innerText = window.state.points;
-            
             const activeChar = CHARACTERS.find(c => c.id === window.state.activeCharacter) || CHARACTERS[0];
             document.getElementById('active-avatar-container').innerHTML = SANRIO_SVGS[activeChar.id];
             document.getElementById('active-char-name').innerText = activeChar.name;
-            
-            document.getElementById('character-speech').innerText = 
-                `"${window.currentProfileName || '친구'}야! ${activeChar.speech.replace(/^"|"$/g, '')}"`;
+            document.getElementById('character-speech').innerText = `"${window.currentProfileName || '친구'}야! ${activeChar.speech.replace(/^"|"$/g, '')}"`;
 
             const now = new Date();
             const days = ['일', '월', '화', '수', '목', '금', '토'];
-            document.getElementById('today-date-text').innerText = 
-                `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${days[now.getDay()]})`;
+            document.getElementById('today-date-text').innerText = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${days[now.getDay()]})`;
         }
 
         function renderTasks() {
             const listEl = document.getElementById('task-list');
             listEl.innerHTML = '';
-
             let completedCount = 0;
 
             if (window.state.tasks.length === 0) {
-                listEl.innerHTML = `
-                    <div class="bg-white p-6 rounded-2xl text-center text-gray-400 font-jua">
-                        <p class="text-2xl mb-1">📝</p>
-                        <p>아직 등록된 학습 목표가 없어요!</p>
-                        <p class="text-xs text-purple-400 mt-1">상단의 '+ 할 일 추가' 버튼을 눌러보세요.</p>
-                    </div>
-                `;
+                listEl.innerHTML = `<div class="bg-white p-6 rounded-2xl text-center text-gray-400 font-jua"><p>등록된 목표가 없어요!</p></div>`;
             }
 
             window.state.tasks.forEach(task => {
                 if (task.completed) completedCount++;
-                const taskPts = task.points || 10;
-
                 const taskDiv = document.createElement('div');
-                taskDiv.className = `p-3 rounded-2xl bg-white shadow-sm border transition-all duration-300 flex items-center justify-between ${
-                    task.completed ? 'border-purple-200 bg-purple-50/50' : 'border-purple-100'
-                }`;
-
+                taskDiv.className = `p-3 rounded-2xl bg-white shadow-sm border flex items-center justify-between ${task.completed ? 'border-purple-200 bg-purple-50/50' : 'border-purple-100'}`;
                 taskDiv.innerHTML = `
                     <div class="flex items-center space-x-3 flex-1 overflow-hidden pr-2">
-                        <button onclick="toggleTask('${task.id}')" class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
-                            task.completed 
-                                ? 'bg-gradient-to-r from-pink-400 to-purple-600 border-transparent text-white scale-105' 
-                                : 'border-purple-300 text-transparent hover:border-purple-400'
-                        }">
-                            <i class="fas fa-check text-xs"></i>
-                        </button>
-                        <span class="text-xs font-dodum truncate ${task.completed ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}">
-                            ${escapeHtml(task.title)}
-                        </span>
+                        <button onclick="toggleTask('${task.id}')" class="w-7 h-7 rounded-full border-2 flex items-center justify-center ${task.completed ? 'bg-purple-600 border-transparent text-white' : 'border-purple-300 text-transparent'}"><i class="fas fa-check text-xs"></i></button>
+                        <span class="text-xs font-dodum truncate ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">${escapeHtml(task.title)}</span>
                     </div>
                     <div class="flex items-center space-x-1.5">
-                        <span class="text-[10px] font-jua px-2 py-0.5 rounded-full ${task.completed ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-800'}">
-                            +${taskPts}P
-                        </span>
-                        <button onclick="deleteTask('${task.id}')" class="text-gray-300 hover:text-red-400 text-xs p-1">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                        <span class="text-[10px] font-jua px-2 py-0.5 rounded-full ${task.completed ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-800'}">+${task.points || 10}P</span>
+                        <button onclick="deleteTask('${task.id}')" class="text-gray-300 hover:text-red-400 text-xs p-1"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 `;
                 listEl.appendChild(taskDiv);
             });
 
-            const total = window.state.tasks.length;
-            const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+            const percent = window.state.tasks.length > 0 ? Math.round((completedCount / window.state.tasks.length) * 100) : 0;
             document.getElementById('progress-percent').innerText = `${percent}%`;
             document.getElementById('progress-bar').style.width = `${percent}%`;
         }
@@ -876,159 +682,37 @@
         function renderShop() {
             const gridEl = document.getElementById('character-grid');
             gridEl.innerHTML = '';
-
             CHARACTERS.forEach(char => {
                 const isUnlocked = window.state.unlockedCharacters.includes(char.id);
                 const isActive = window.state.activeCharacter === char.id;
                 const canAfford = window.state.points >= char.cost;
 
                 const card = document.createElement('div');
-                card.className = `bg-white p-3 rounded-2xl border-2 shadow-sm flex flex-col items-center text-center relative overflow-hidden ${
-                    isActive ? 'border-purple-500 bg-purple-50/40' : 'border-purple-100'
-                }`;
-
+                card.className = `bg-white p-3 rounded-2xl border-2 shadow-sm flex flex-col items-center text-center relative ${isActive ? 'border-purple-500' : 'border-purple-100'}`;
                 card.innerHTML = `
-                    ${isActive ? `<span class="absolute top-2 left-2 bg-purple-600 text-white text-[9px] font-jua px-2 py-0.5 rounded-full">대표 캐릭터</span>` : ''}
-                    
-                    <div class="w-14 h-14 my-2 p-1 bg-purple-50 rounded-2xl border border-purple-100 ${!isUnlocked ? 'filter opacity-40 grayscale' : 'animate-bounce-slow'}">
-                        ${SANRIO_SVGS[char.id]}
-                    </div>
-
+                    ${isActive ? `<span class="absolute top-2 left-2 bg-purple-600 text-white text-[9px] font-jua px-2 py-0.5 rounded-full">장착중</span>` : ''}
+                    <div class="w-14 h-14 my-2 p-1 bg-purple-50 rounded-2xl ${!isUnlocked ? 'filter opacity-40 grayscale' : ''}">${SANRIO_SVGS[char.id]}</div>
                     <h3 class="font-jua text-xs text-gray-800 mb-1">${char.name}</h3>
-                    
-                    ${isUnlocked ? `
-                        <button onclick="setActiveCharacter('${char.id}')" ${isActive ? 'disabled' : ''} 
-                            class="w-full mt-1 py-1 rounded-xl font-jua text-xs transition ${
-                                isActive 
-                                    ? 'bg-purple-100 text-purple-400 cursor-default' 
-                                    : 'bg-purple-600 hover:bg-purple-700 text-white shadow'
-                            }">
-                            ${isActive ? '장착 중' : '선택하기'}
-                        </button>
-                    ` : `
-                        <button onclick="unlockCharacter('${char.id}', ${char.cost})" ${!canAfford ? 'disabled' : ''} 
-                            class="w-full mt-1 py-1 rounded-xl font-jua text-xs transition flex items-center justify-center space-x-1 ${
-                                canAfford 
-                                    ? 'bg-gradient-to-r from-pink-400 to-purple-600 text-white shadow hover:opacity-90 active:scale-95' 
-                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            }">
-                            <i class="fas fa-lock text-[10px]"></i>
-                            <span>${char.cost}P 해금</span>
-                        </button>
-                    `}
+                    ${isUnlocked ? `<button onclick="setActiveCharacter('${char.id}')" ${isActive ? 'disabled' : ''} class="w-full mt-1 py-1 rounded-xl font-jua text-xs ${isActive ? 'bg-purple-100 text-purple-400' : 'bg-purple-600 text-white shadow'}">${isActive ? '사용중' : '선택'}</button>` 
+                    : `<button onclick="unlockCharacter('${char.id}', ${char.cost})" ${!canAfford ? 'disabled' : ''} class="w-full mt-1 py-1 rounded-xl font-jua text-xs ${canAfford ? 'bg-pink-500 text-white shadow' : 'bg-gray-100 text-gray-400'}">${char.cost}P 해금</button>`}
                 `;
                 gridEl.appendChild(card);
             });
         }
 
-        window.renderCalendar = function() {
-            const date = window.state.viewMonth;
-            const year = date.getFullYear();
-            const month = date.getMonth();
-
-            document.getElementById('calendar-month-title').innerText = `${year}.${String(month + 1).padStart(2, '0')}`;
-
-            const firstDay = new Date(year, month, 1).getDay();
-            const lastDate = new Date(year, month + 1, 0).getDate();
-
-            const container = document.getElementById('calendar-days');
-            container.innerHTML = '';
-
-            for (let i = 0; i < firstDay; i++) {
-                const blank = document.createElement('div');
-                blank.className = 'h-8';
-                container.appendChild(blank);
-            }
-
-            for (let d = 1; d <= lastDate; d++) {
-                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const dayLog = window.state.history[dateKey];
-
-                const dayBtn = document.createElement('button');
-                dayBtn.onclick = () => window.selectCalendarDate(dateKey);
-
-                let hasCompleted = false;
-                if (dayLog && dayLog.tasks) {
-                    const count = dayLog.tasks.filter(t => t.completed).length;
-                    if (count > 0) hasCompleted = true;
-                }
-
-                const isToday = dateKey === getTodayKey();
-
-                dayBtn.className = `h-8 rounded-xl flex flex-col items-center justify-center relative transition-all ${
-                    isToday ? 'border-2 border-purple-500 font-bold bg-purple-50' : 'hover:bg-purple-50'
-                }`;
-
-                dayBtn.innerHTML = `
-                    <span class="text-[11px] ${isToday ? 'text-purple-700 font-bold' : 'text-gray-700'}">${d}</span>
-                    ${hasCompleted ? `
-                        <span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
-                    ` : '<span class="w-1.5 h-1.5 opacity-0"></span>'}
-                `;
-
-                container.appendChild(dayBtn);
-            }
-        };
-
-        window.selectCalendarDate = function(dateKey) {
-            const dateTitle = document.getElementById('selected-date-title');
-            const datePoints = document.getElementById('selected-date-points');
-            const taskList = document.getElementById('selected-date-tasks');
-
-            const dayLog = window.state.history[dateKey];
-
-            dateTitle.innerText = `${dateKey} [${window.currentProfileName}] 기록`;
-
-            if (!dayLog || !dayLog.tasks || dayLog.tasks.length === 0) {
-                datePoints.innerText = '기록 없음';
-                taskList.innerHTML = `<li class="text-center py-3 text-gray-400 font-jua">해당 날짜의 학습 내역이 없습니다.</li>`;
-                return;
-            }
-
-            const completedTasks = dayLog.tasks.filter(t => t.completed);
-            const earnedP = completedTasks.reduce((sum, t) => sum + (t.points || 10), 0);
-            datePoints.innerText = `완료 ${completedTasks.length}/${dayLog.tasks.length}개 (+${earnedP}P)`;
-
-            taskList.innerHTML = '';
-            dayLog.tasks.forEach(t => {
-                const taskPts = t.points || 10;
-                const li = document.createElement('li');
-                li.className = `flex items-center justify-between p-2 rounded-lg ${t.completed ? 'bg-purple-50 text-purple-900' : 'bg-gray-50 text-gray-400'}`;
-                li.innerHTML = `
-                    <div class="flex items-center space-x-1.5">
-                        <span class="${t.completed ? '' : 'line-through'}">${escapeHtml(t.title)}</span>
-                        <span class="text-[9px] font-jua px-1.5 py-0.2 bg-purple-200/60 rounded text-purple-800">+${taskPts}P</span>
-                    </div>
-                    <span class="font-jua text-[10px] ${t.completed ? 'text-purple-600' : 'text-gray-400'}">
-                        ${t.completed ? '완료 ✨' : '미완료'}
-                    </span>
-                `;
-                taskList.appendChild(li);
-            });
-        };
-
-        window.changeMonth = function(delta) {
-            window.state.viewMonth.setMonth(window.state.viewMonth.getMonth() + delta);
-            window.renderCalendar();
-        };
-
-        // TASK ACTIONS
         window.toggleTask = function(id) {
             const task = window.state.tasks.find(t => t.id === id);
             if (!task) return;
-
-            const taskPts = task.points || 10;
             task.completed = !task.completed;
-
+            const pts = task.points || 10;
             if (task.completed) {
-                window.state.points += taskPts;
-                triggerConfetti();
-                showToast(`🎉 축하합니다! ${taskPts} 포인트를 획득했어요!`);
+                window.state.points += pts;
+                if (typeof confetti === 'function') confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+                showToast(`🎉 +${pts} 포인트 획득!`);
             } else {
-                window.state.points = Math.max(0, window.state.points - taskPts);
-                showToast(`⚡ ${taskPts} 포인트가 차감되었습니다.`);
+                window.state.points = Math.max(0, window.state.points - pts);
+                showToast(`⚡ 포인트가 차감되었습니다.`);
             }
-
             syncToOnlineCloud();
             renderHeader();
             renderTasks();
@@ -1036,101 +720,36 @@
         };
 
         window.deleteTask = function(id) {
-            const task = window.state.tasks.find(t => t.id === id);
-            if (task && task.completed) {
-                const taskPts = task.points || 10;
-                window.state.points = Math.max(0, window.state.points - taskPts);
-            }
             window.state.tasks = window.state.tasks.filter(t => t.id !== id);
             syncToOnlineCloud();
-            renderHeader();
             renderTasks();
         };
 
-        window.openAddTaskModal = function() {
-            document.getElementById('custom-task-input').value = '';
-            window.setPointPreset(10);
-            document.getElementById('add-task-modal').classList.remove('hidden');
-        };
-
-        window.closeAddTaskModal = function() {
-            document.getElementById('add-task-modal').classList.add('hidden');
-        };
-
-        window.openCloudConfigModal = function() {
-            document.getElementById('cloud-config-modal').classList.remove('hidden');
-        };
-
-        window.closeCloudConfigModal = function() {
-            document.getElementById('cloud-config-modal').classList.add('hidden');
-        };
-
-        window.setPointPreset = function(pts) {
-            document.getElementById('custom-task-points').value = pts;
-            window.updatePointDisplay(pts);
-
-            const buttons = document.querySelectorAll('.preset-btn');
-            buttons.forEach(btn => {
-                if (parseInt(btn.innerText, 10) === pts) {
-                    btn.className = "preset-btn flex-1 py-1 rounded-lg bg-purple-600 text-white border border-purple-600 text-[10px] font-jua";
-                } else {
-                    btn.className = "preset-btn flex-1 py-1 rounded-lg bg-white border border-purple-200 text-[10px] font-jua text-purple-700";
-                }
-            });
-        };
-
-        window.updatePointDisplay = function(val) {
-            const pts = parseInt(val, 10) || 10;
-            document.getElementById('point-preset-display').innerText = `${pts} P`;
-        };
-
-        window.applyPreset = function(text, defaultPts = 10) {
-            document.getElementById('custom-task-input').value = text;
-            window.setPointPreset(defaultPts);
-        };
+        window.openAddTaskModal = function() { document.getElementById('add-task-modal').classList.remove('hidden'); };
+        window.closeAddTaskModal = function() { document.getElementById('add-task-modal').classList.add('hidden'); };
+        window.openCloudConfigModal = function() { document.getElementById('cloud-config-modal').classList.remove('hidden'); };
+        window.closeCloudConfigModal = function() { document.getElementById('cloud-config-modal').classList.add('hidden'); };
 
         window.saveNewTask = function() {
-            const input = document.getElementById('custom-task-input');
-            const pointsInput = document.getElementById('custom-task-points');
-
-            const title = input.value.trim();
-            const points = parseInt(pointsInput.value, 10) || 10;
-
-            if (!title) {
-                showToast("⚠️ 공부 목표를 입력해 주세요!");
-                return;
-            }
-
-            window.state.tasks.push({
-                id: 'task_' + Date.now(),
-                title: title,
-                points: Math.max(1, points),
-                completed: false
-            });
-
+            const title = document.getElementById('custom-task-input').value.trim();
+            const points = parseInt(document.getElementById('custom-task-points').value, 10) || 10;
+            if (!title) { showToast("⚠️ 목표를 입력해주세요!"); return; }
+            window.state.tasks.push({ id: 'task_' + Date.now(), title, points, completed: false });
             syncToOnlineCloud();
             renderTasks();
             window.closeAddTaskModal();
-            showToast(`✨ 새로운 목표가 추가되었어요! (+${points}P)`);
+            showToast("✨ 새로운 목표 추가 완료!");
         };
 
         window.unlockCharacter = function(charId, cost) {
-            if (window.state.points < cost) {
-                showToast("🔒 포인트가 부족합니다!");
-                return;
-            }
-
+            if (window.state.points < cost) { showToast("🔒 포인트가 부족해요!"); return; }
             window.state.points -= cost;
             window.state.unlockedCharacters.push(charId);
             window.state.activeCharacter = charId;
-
-            triggerConfetti();
             syncToOnlineCloud();
             renderHeader();
             renderShop();
-
-            const charObj = CHARACTERS.find(c => c.id === charId);
-            showToast(`💖 산리오 친구 [${charObj.name}]을(를) 해금했어요!`);
+            showToast("💖 새 캐릭터 해금 완료!");
         };
 
         window.setActiveCharacter = function(charId) {
@@ -1138,284 +757,154 @@
             syncToOnlineCloud();
             renderHeader();
             renderShop();
-            showToast("👑 대표 캐릭터가 변경되었습니다!");
+            showToast("👑 대표 캐릭터 변경!");
         };
 
         window.switchTab = function(tabName) {
-            document.getElementById('tab-tasks').classList.add('hidden');
-            document.getElementById('tab-shop').classList.add('hidden');
-            document.getElementById('tab-calendar').classList.add('hidden');
-
             ['tasks', 'shop', 'calendar'].forEach(t => {
-                const navBtn = document.getElementById(`nav-${t}`);
-                navBtn.classList.remove('text-purple-600');
-                navBtn.classList.add('text-gray-400');
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "flex-1 py-1 flex flex-col items-center text-gray-400 font-jua transition";
             });
-
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-            const activeNav = document.getElementById(`nav-${tabName}`);
-            activeNav.classList.remove('text-gray-400');
-            activeNav.classList.add('text-purple-600');
-
+            document.getElementById(`nav-${tabName}`).className = "flex-1 py-1 flex flex-col items-center text-purple-600 font-jua transition";
             if (tabName === 'shop') renderShop();
             if (tabName === 'calendar') window.renderCalendar();
         };
 
-        function triggerConfetti() {
-            if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 40,
-                    spread: 55,
-                    origin: { y: 0.7 },
-                    colors: ['#F472B6', '#A855F7', '#A7F3D0', '#FEF08A']
-                });
+        window.renderCalendar = function() {
+            const date = window.state.viewMonth;
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            document.getElementById('calendar-month-title').innerText = `${year}.${String(month + 1).padStart(2, '0')}`;
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            const container = document.getElementById('calendar-days');
+            container.innerHTML = '';
+
+            for (let i = 0; i < firstDay; i++) container.appendChild(document.createElement('div'));
+            for (let d = 1; d <= lastDate; d++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dayBtn = document.createElement('button');
+                dayBtn.className = "h-8 rounded-xl flex flex-col items-center justify-center hover:bg-purple-50";
+                dayBtn.onclick = () => {
+                    document.getElementById('selected-date-title').innerText = `${dateKey} 기록`;
+                    document.getElementById('selected-date-points').innerText = window.state.history[dateKey] ? "기록 있음" : "기록 없음";
+                };
+                dayBtn.innerHTML = `<span class="text-[11px] text-gray-700">${d}</span>`;
+                container.appendChild(dayBtn);
             }
-        }
+        };
+
+        window.changeMonth = function(delta) {
+            window.state.viewMonth.setMonth(window.state.viewMonth.getMonth() + delta);
+            window.renderCalendar();
+        };
 
         function showToast(message) {
             const toast = document.getElementById('toast-message');
             document.getElementById('toast-text').innerText = message;
             toast.classList.remove('opacity-0');
             toast.classList.add('opacity-100');
-
-            setTimeout(() => {
-                toast.classList.remove('opacity-100');
-                toast.classList.add('opacity-0');
-            }, 2200);
+            setTimeout(() => toast.classList.remove('opacity-100') || toast.classList.add('opacity-0'), 2200);
         }
 
         function escapeHtml(text) {
-            return text.replace(/[&<"']/g, function(m) {
-                return { '&': '&amp;', '<': '&lt;', '"': '&quot;', "'": '&#039;' }[m];
-            });
+            return text.replace(/[&<"']/g, m => ({ '&': '&amp;', '<': '&lt;', '"': '&quot;', "'": '&#039;' }[m]));
         }
 
-        // STARTUP LOGIC (클라우드 프로필 목록 연동 대기)
         window.onload = async function() {
             await initFirebase();
-            await window.loadProfiles(); // 👈 클라우드에서 최신 프로필 목록 로드 대기
-
+            await window.loadProfiles();
             const lastActive = localStorage.getItem('sanrio_app_last_active_profile');
-
             if (lastActive && window.profileList.includes(lastActive)) {
-                window.promptPinLogin(lastActive);
+                window.loadProfileData(lastActive);
             } else if (window.profileList.length > 0) {
-                window.promptPinLogin(window.profileList[0]);
+                window.loadProfileData(window.profileList[0]);
             } else {
                 window.openProfileModal();
             }
         };
 
-        // ==========================================
-        // 💌 실시간 채팅 & 프로필 감지 로직
-        // ==========================================
+        // 채팅 시스템 관련
         let unsubscribeMessages = null;
-
         function getActiveProfile() {
-            if (window.currentProfileName) return window.currentProfileName;
-            
-            const profileEl = document.getElementById('current-profile-name');
-            if (profileEl && profileEl.innerText && profileEl.innerText !== '이름 없음') {
-                return profileEl.innerText.trim();
-            }
-
-            const lastProfile = localStorage.getItem('sanrio_app_last_active_profile');
-            if (lastProfile) return lastProfile;
-
-            return "기본아이";
+            return window.currentProfileName || localStorage.getItem('sanrio_app_last_active_profile') || "기본아이";
         }
-
         window.openChat = function() {
-            const modal = document.getElementById('chatModal');
-            if (modal) {
-                modal.style.display = 'flex';
-                window.listenMessages();
-            }
+            document.getElementById('chatModal').style.display = 'flex';
+            window.listenMessages();
         };
-
         window.closeChat = function() {
-            const modal = document.getElementById('chatModal');
-            if (modal) modal.style.display = 'none';
-            if (window.unsubscribeMessages) {
-                window.unsubscribeMessages();
-                window.unsubscribeMessages = null;
-            }
+            document.getElementById('chatModal').style.display = 'none';
+            if (unsubscribeMessages) { unsubscribeMessages(); unsubscribeMessages = null; }
         };
-
         window.listenMessages = function() {
             const activeProfile = getActiveProfile();
-            if (typeof db === 'undefined' || !activeProfile) return;
-
-            if (window.unsubscribeMessages) {
-                window.unsubscribeMessages();
-                window.unsubscribeMessages = null;
-            }
-
+            if (!db || !activeProfile) return;
+            if (unsubscribeMessages) unsubscribeMessages();
             try {
                 const msgRef = doc(db, "artifacts", appId, "public", "data", "profiles", activeProfile);
-                
-                window.unsubscribeMessages = onSnapshot(msgRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        const messages = data.chatMessages || [];
-                        window.renderMessages(messages);
-                    } else {
-                        const container = document.getElementById('chatMessages');
-                        if (container) {
-                            container.innerHTML = '<div style="text-align:center; color:#888; font-size:13px; margin-top:10px;">첫 메시지를 남겨보세요! 💌</div>';
-                        }
-                    }
+                unsubscribeMessages = onSnapshot(msgRef, (docSnap) => {
+                    const messages = docSnap.exists() ? (docSnap.data().chatMessages || []) : [];
+                    const container = document.getElementById('chatMessages');
+                    container.innerHTML = messages.length === 0 ? '<div style="text-align:center; color:#888; font-size:13px;">첫 메시지를 남겨보세요! 💌</div>' : '';
+                    messages.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.style.cssText = "margin:6px 0; padding:8px 12px; border-radius:12px; max-width:75%; word-break:break-word;";
+                        div.style.background = msg.sender === 'parent' ? '#f3e8ff' : '#ffffff';
+                        div.innerHTML = `<div style="font-weight:bold; font-size:11px; color:#7e22ce;">${msg.senderName}</div><div style="font-size:13px;">${msg.text}</div>`;
+                        container.appendChild(div);
+                    });
+                    container.scrollTop = container.scrollHeight;
                 });
-            } catch (err) {
-                console.error("실시간 수신 에러:", err);
-            }
+            } catch(e) {}
         };
-
-        window.renderMessages = function(messages) {
-            const container = document.getElementById('chatMessages');
-            if (!container) return;
-
-            if (!messages || messages.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px; margin-top:10px;">메시지가 없습니다. 첫 메시지를 남겨보세요! 💌</div>';
-                return;
-            }
-
-            container.innerHTML = '';
-            messages.forEach(msg => {
-                const div = document.createElement('div');
-                div.style.margin = "6px 0";
-                div.style.padding = "8px 12px";
-                div.style.borderRadius = "12px";
-                div.style.maxWidth = "75%";
-                div.style.wordBreak = "break-word";
-                
-                if (msg.sender === 'parent') {
-                    div.style.background = "#f3e8ff";
-                    div.style.marginLeft = "auto";
-                    div.style.borderBottomRightRadius = "2px";
-                } else if (msg.sender === 'system') {
-                    div.style.background = "#f1f5f9";
-                    div.style.margin = "6px auto";
-                    div.style.textAlign = "center";
-                    div.style.maxWidth = "90%";
-                } else {
-                    div.style.background = "#ffffff";
-                    div.style.border = "1px solid #e2e8f0";
-                    div.style.marginRight = "auto";
-                    div.style.borderBottomLeftRadius = "2px";
-                }
-
-                let timeStr = '';
-                if (msg.time) {
-                    try {
-                        const d = new Date(msg.time);
-                        timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    } catch(e) {}
-                }
-
-                div.innerHTML = `
-                    <div style="font-weight:bold; font-size:11px; margin-bottom:2px; color:#7e22ce;">${msg.senderName || '알 수 없음'}</div>
-                    <div style="font-size:13px; color:#1e293b;">${msg.text}</div>
-                    <div style="font-size:9px; opacity:0.5; text-align:right; margin-top:2px;">${timeStr}</div>
-                `;
-                container.appendChild(div);
-            });
-
-            container.scrollTop = container.scrollHeight;
-        };
-
-        window.sendChatMessage = async function(customText = null, isSystem = false) {
+        window.sendChatMessage = async function() {
             const input = document.getElementById('chatInput');
-            const text = customText || (input ? input.value.trim() : '');
-
-            if (!text) {
-                alert("메시지를 입력해 주세요!");
-                return;
-            }
-
+            const text = input ? input.value.trim() : '';
+            if (!text) return;
             const activeProfile = getActiveProfile();
-
             try {
-                let sender = 'child';
-                let senderName = '👧 아이';
-
-                if (isSystem) {
-                    sender = 'system';
-                    senderName = '🔔 시스템';
-                } else {
-                    const isParent = confirm("부모님으로 보내시겠습니까?\n[확인]: 부모님 / [취소]: 아이");
-                    sender = isParent ? 'parent' : 'child';
-                    senderName = isParent ? '👑 부모님' : '👧 아이';
-                }
-
-                const newMsg = {
-                    sender: sender,
-                    senderName: senderName,
-                    text: text,
-                    time: new Date().toISOString()
-                };
-
+                const isParent = confirm("부모님으로 보내시겠습니까?\n[확인]: 부모님 / [취소]: 아이");
                 const docRef = doc(db, "artifacts", appId, "public", "data", "profiles", activeProfile);
                 const docSnap = await getDoc(docRef);
-                let currentMsgs = [];
-                
-                if (docSnap.exists() && docSnap.data().chatMessages) {
-                    currentMsgs = docSnap.data().chatMessages;
-                }
-
-                currentMsgs.push(newMsg);
+                const currentMsgs = docSnap.exists() ? (docSnap.data().chatMessages || []) : [];
+                currentMsgs.push({
+                    sender: isParent ? 'parent' : 'child',
+                    senderName: isParent ? '👑 부모님' : '👧 아이',
+                    text: text,
+                    time: new Date().toISOString()
+                });
                 await setDoc(docRef, { chatMessages: currentMsgs }, { merge: true });
-
-                if (input && !customText) input.value = '';
+                input.value = '';
                 window.listenMessages();
-
-            } catch (err) {
-                alert("전송 실패: " + err.message);
-            }
-        };
-
-        window.notifyMissionComplete = function(missionTitle) {
-            window.sendChatMessage(`🎉 미션 완료! '${missionTitle}' 습관을 완수했어요!`, true);
+            } catch (err) { alert("전송 실패: " + err.message); }
         };
     </script>
-</div>
 
-<!-- 우측 하단 쿠로미 메시지 버튼 -->
-<div class="chat-btn-container">
-    <button class="chat-open-btn" onclick="openChat()">✉️ 쿠로미 메시지함 열기</button>
-</div>
-
-<!-- 쿠로미 대화함 팝업 모달창 (테이블 레이아웃 적용으로 모바일 버튼 잘림 원천 차단) -->
-<div id="chatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); z-index: 10000; justify-content: center; align-items: center; box-sizing: border-box; padding: 15px;">
-    <div style="background: white; width: 100%; max-width: 340px; height: 460px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.4); box-sizing: border-box;">
-        
-        <!-- 타이틀바 -->
-        <div style="background: #a855f7; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 15px; flex-shrink: 0; box-sizing: border-box;">
-            <span>💌 쿠로미 대화함</span>
-            <button onclick="closeChat()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 0;">✕</button>
-        </div>
-
-        <!-- 메시지 목록 출력 영역 -->
-        <div id="chatMessages" style="flex: 1; min-height: 0; padding: 15px; overflow-y: auto; background: #f9f5ff; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box;">
-            <div style="text-align: center; color: #888; font-size: 13px; margin-top: 10px;">메시지함을 불러오는 중입니다...</div>
-        </div>
-
-        <!-- 입력 및 전송 영역 (테이블 레이아웃: 핸드폰 화면에서 전송 버튼 잘림 방지) -->
-        <div style="padding: 10px 12px; background: white; border-top: 1px solid #eee; flex-shrink: 0; box-sizing: border-box; width: 100%;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="padding-right: 6px;">
-                        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." style="width: 100%; height: 38px; padding: 0 10px; border: 1px solid #ddd; border-radius: 10px; outline: none; font-size: 13px; box-sizing: border-box;" onkeypress="if(event.key==='Enter') sendChatMessage()">
-                    </td>
-                    <td style="width: 65px; white-space: nowrap;">
-                        <button onclick="sendChatMessage()" style="width: 100%; height: 38px; background: #a855f7; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 13px; box-sizing: border-box;">전송</button>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
+    <!-- 우측 하단 쿠로미 메시지 버튼 -->
+    <div class="chat-btn-container">
+        <button class="chat-open-btn" onclick="openChat()">✉️ 쿠로미 메시지함</button>
     </div>
-</div>
+
+    <!-- 쿠로미 대화함 팝업 모달창 -->
+    <div id="chatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center; padding: 15px;">
+        <div style="background: white; width: 100%; max-width: 340px; height: 460px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+            <div style="background: #a855f7; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 15px;">
+                <span>💌 쿠로미 대화함</span>
+                <button onclick="closeChat()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+            </div>
+            <div id="chatMessages" style="flex: 1; padding: 15px; overflow-y: auto; background: #f9f5ff; display: flex; flex-direction: column; gap: 8px;"></div>
+            <div style="padding: 10px 12px; background: white; border-top: 1px solid #eee;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding-right: 6px;"><input type="text" id="chatInput" placeholder="메시지 입력..." style="width: 100%; height: 38px; padding: 0 10px; border: 1px solid #ddd; border-radius: 10px; outline: none; font-size: 13px;" onkeypress="if(event.key==='Enter') sendChatMessage()"></td>
+                        <td style="width: 65px;"><button onclick="sendChatMessage()" style="width: 100%; height: 38px; background: #a855f7; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; cursor: pointer;">전송</button></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
