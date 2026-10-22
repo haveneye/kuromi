@@ -2,191 +2,173 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>쿠로미와 함께하는 학습 습관</title>
-    <!-- Tailwind CSS CDN -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>산리오 학습 습관 매니저</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Canvas Confetti CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap');
-        
-        body {
-            font-family: 'Gowun Dodum', sans-serif;
-            background-color: #fce7f3;
-            touch-action: manipulation;
-        }
-        
-        .font-jua {
-            font-family: 'Jua', sans-serif;
-        }
-        
-        .bounce-short {
-            animation: bounce 0.6s ease infinite alternate;
-        }
-        @keyframes bounce {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-8px); }
-        }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #c084fc; border-radius: 10px; }
+        body { font-family: 'Gowun Dodum', sans-serif; background-color: #fdf2f8; }
+        .font-jua { font-family: 'Jua', sans-serif; }
     </style>
 </head>
-<body class="min-h-screen pb-12 text-gray-800 select-none">
+<body class="bg-pink-50 min-h-screen text-gray-800 pb-10">
 
-    <!-- Top Navigation / Header -->
-    <header class="bg-purple-900 text-white p-4 shadow-md sticky top-0 z-30">
+    <!-- Header -->
+    <header class="bg-purple-600 text-white p-4 shadow-md sticky top-0 z-50">
         <div class="max-w-md mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <!-- Kuromi Mini Logo SVG -->
-                <svg class="w-8 h-8 fill-current text-pink-400" viewBox="0 0 100 100">
-                    <path d="M50 15 C30 15 15 30 15 50 C15 70 30 85 50 85 C70 85 85 70 85 50 C85 30 70 15 50 15 Z" fill="#2e1065"/>
-                    <path d="M25 25 L10 5 L35 20 Z" fill="#2e1065"/>
-                    <path d="M75 25 L90 5 L65 20 Z" fill="#2e1065"/>
-                    <circle cx="38" cy="48" r="5" fill="#ffffff"/>
-                    <circle cx="62" cy="48" r="5" fill="#ffffff"/>
-                    <circle cx="39" cy="49" r="2" fill="#000000"/>
-                    <circle cx="61" cy="49" r="2" fill="#000000"/>
-                    <path d="M47 62 Q50 67 53 62" stroke="#f472b6" stroke-width="3" fill="none"/>
-                    <path d="M50 32 L54 38 L60 38 L55 42 L57 48 L50 44 L43 48 L45 42 L40 38 L46 38 Z" fill="#f472b6"/>
-                </svg>
-                <h1 class="font-jua text-xl tracking-wide text-pink-300">쿠로미 습관매니저</h1>
-            </div>
-            
-            <div class="flex items-center space-x-2">
-                <!-- DB Config Button -->
-                <button onclick="openDbConfigModal()" class="bg-purple-800 text-pink-200 text-xs px-2.5 py-1.5 rounded-lg border border-purple-600 font-jua hover:bg-purple-700">
-                    ⚙️ DB연동
-                </button>
-                <!-- Parent Mode Toggle -->
-                <button id="parentToggleBtn" onclick="toggleParentMode()" class="bg-purple-800 text-xs px-2.5 py-1.5 rounded-lg border border-purple-600 font-jua text-pink-200">
-                    👨‍👩‍👧 부모모드: OFF
-                </button>
-            </div>
+            <h1 class="font-jua text-xl flex items-center gap-2">
+                <span>🌸</span> 지우의 산리오 습관장
+            </h1>
+            <button onclick="toggleParentMode()" id="parentBtn" class="bg-purple-700 text-xs px-3 py-1.5 rounded-full font-jua border border-purple-400">
+                👤 부모님 모드: OFF
+            </button>
         </div>
     </header>
 
-    <!-- Realtime Connection Status Bar -->
-    <div id="dbStatusBanner" class="bg-yellow-100 text-yellow-800 text-xs text-center py-1 px-2 font-medium border-b border-yellow-200">
-        ⚠️ 로컬 모드 사용 중 (⚙️ DB연동 버튼을 눌러 파이어베이스 값을 입력하면 실시간 연결됩니다)
-    </div>
-
-    <!-- Main Container -->
     <main class="max-w-md mx-auto p-4 space-y-4">
-
-        <!-- Active Profile Card -->
-        <section class="bg-white rounded-2xl p-4 shadow-sm border-2 border-purple-200 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div id="profileAvatar" class="w-12 h-12 rounded-full bg-purple-100 border-2 border-purple-300 flex items-center justify-center text-2xl shadow-inner">
-                    😈
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span id="profileName" class="font-jua text-lg text-purple-950">프로필 선택 필요</span>
-                        <button onclick="openProfileSelector()" class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full hover:bg-purple-200 font-bold">변경</button>
-                    </div>
-                    <p class="text-xs text-gray-500" id="profileSubText">4자리 PIN으로 안전하게 보호됨</p>
-                </div>
+        <!-- Profile & Points -->
+        <section class="bg-white p-4 rounded-2xl shadow-sm border border-pink-200 flex justify-between items-center">
+            <div>
+                <span id="profileName" class="font-jua text-lg text-purple-700">지우</span>
+                <p class="text-xs text-gray-400">오늘도 힘내서 포인트를 모아봐요!</p>
             </div>
             <div class="text-right">
-                <span class="text-xs text-purple-600 font-bold block">보유 포인트</span>
-                <span id="userPoints" class="font-jua text-2xl text-purple-700">0 P</span>
+                <span class="text-xs text-gray-500 block">내 포인트</span>
+                <span id="userPoints" class="font-jua text-2xl text-pink-600">0 P</span>
             </div>
         </section>
 
-        <!-- Parent Control Banner -->
-        <section id="parentNoticeBox" class="hidden bg-purple-900 text-white p-3 rounded-xl text-xs space-y-1 shadow-md border-2 border-pink-400">
-            <div class="flex justify-between items-center">
-                <span class="font-bold text-pink-300 text-sm">👑 부모님 실시간 관리 모드 활성화</span>
-                <span class="bg-pink-500 text-white text-[10px] px-1.5 py-0.5 rounded">실시간 수정 중</span>
-            </div>
-            <p class="text-purple-200">할 일을 직접 추가/삭제하거나 포인트를 임의로 보상할 수 있습니다.</p>
-        </section>
-
-        <!-- Tabs Navigation -->
-        <div class="flex bg-purple-200 p-1 rounded-xl font-jua text-sm text-purple-800">
-            <button id="tabBtn1" onclick="switchTab('habits')" class="flex-1 py-2 rounded-lg bg-white shadow text-purple-900 font-bold text-center">
-                📝 오늘 할 일
-            </button>
-            <button id="tabBtn2" onclick="switchTab('shop')" class="flex-1 py-2 rounded-lg text-center hover:bg-white/50">
-                🛍️ 캐릭터 샵
-            </button>
-            <button id="tabBtn3" onclick="switchTab('calendar')" class="flex-1 py-2 rounded-lg text-center hover:bg-white/50">
-                📅 학습 달력
-            </button>
+        <!-- Tabs -->
+        <div class="flex bg-purple-100 p-1 rounded-xl font-jua text-sm text-purple-700">
+            <button onclick="switchTab('habits')" id="tabHabits" class="flex-1 py-2 rounded-lg bg-white shadow text-purple-900 font-bold">📝 할 일</button>
+            <button onclick="switchTab('shop')" id="tabShop" class="flex-1 py-2 rounded-lg">🛍️ 상점</button>
+            <button onclick="switchTab('calendar')" id="tabCalendar" class="flex-1 py-2 rounded-lg">📅 달력</button>
         </div>
 
-        <!-- TAB 1: HABITS & TASKS -->
-        <section id="tab-habits" class="space-y-3">
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-purple-100 space-y-2">
-                <div class="flex gap-2">
-                    <input type="text" id="newTaskInput" placeholder="새로운 공부나 할 일 입력..." class="flex-1 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-purple-500">
-                    <div class="flex items-center bg-purple-50 border border-purple-200 rounded-xl px-2">
-                        <input type="number" id="newTaskPoints" value="10" min="1" max="100" class="w-10 bg-transparent text-center text-sm font-bold text-purple-700 focus:outline-none">
-                        <span class="text-xs text-purple-500 font-bold pr-1">P</span>
-                    </div>
-                    <button onclick="addNewTask()" class="bg-purple-600 text-white px-4 py-2 rounded-xl font-jua text-sm hover:bg-purple-700 shadow-sm">
-                        추가
-                    </button>
-                </div>
-                <!-- Preset Buttons -->
-                <div class="flex flex-wrap gap-1.5 pt-1">
-                    <span class="text-[11px] text-gray-400 self-center mr-1">추천:</span>
-                    <button onclick="addPresetTask('학교/학원 숙제하기', 10)" class="text-xs bg-pink-50 text-pink-600 px-2 py-1 rounded-lg border border-pink-200 hover:bg-pink-100">+ 숙제 10P</button>
-                    <button onclick="addPresetTask('책 20분 읽기', 15)" class="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-lg border border-purple-200 hover:bg-purple-100">+ 독서 15P</button>
-                    <button onclick="addPresetTask('일기 쓰기', 10)" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-100">+ 일기 10P</button>
-                    <button onclick="addPresetTask('방 정리하기', 5)" class="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-lg border border-green-200 hover:bg-green-100">+ 정리 5P</button>
-                </div>
+        <!-- Tab 1: Habits -->
+        <div id="sectionHabits" class="space-y-3">
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-pink-100 flex gap-2">
+                <input type="text" id="taskInput" placeholder="새로운 할 일 입력..." class="flex-1 bg-pink-50 border border-pink-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                <button onclick="addTask()" class="bg-purple-600 text-white px-4 rounded-xl font-jua text-sm">추가</button>
             </div>
+            <div id="taskList" class="space-y-2"></div>
+        </div>
 
-            <!-- Task List -->
-            <div id="taskList" class="space-y-2">
-                <!-- Dynamic tasks injected here -->
-            </div>
-        </section>
+        <!-- Tab 2: Shop -->
+        <div id="sectionShop" class="hidden space-y-3">
+            <div class="grid grid-cols-2 gap-3" id="shopGrid"></div>
+        </div>
 
-        <!-- TAB 2: CHARACTER SHOP -->
-        <section id="tab-shop" class="hidden space-y-3">
-            <div class="bg-purple-100 p-3 rounded-xl text-xs text-purple-800 border border-purple-200 text-center font-medium">
-                ✨ 할 일을 완료해서 모은 포인트로 귀여운 산리오 친구들을 해금하세요!
-            </div>
-            <div id="shopGrid" class="grid grid-cols-2 gap-3">
-                <!-- Dynamic character cards injected here -->
-            </div>
-        </section>
-
-        <!-- TAB 3: CALENDAR & LOGS -->
-        <section id="tab-calendar" class="hidden space-y-3">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-purple-100 space-y-3">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-jua text-purple-900 text-base">📅 이번 달 학습 현황</h3>
-                    <span id="currentMonthStr" class="text-xs font-bold text-purple-600">진행 중</span>
-                </div>
-                
-                <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-400 pb-1">
-                    <div class="text-red-400">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-400">토</div>
-                </div>
-                <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center text-xs">
-                    <!-- Dynamic calendar days injected here -->
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-purple-100 space-y-2">
-                <h4 class="font-jua text-sm text-purple-900">🏆 오늘의 습관 완성도</h4>
-                <div class="w-full bg-gray-100 h-4 rounded-full overflow-hidden border border-gray-200">
-                    <div id="progressBar" class="bg-gradient-to-r from-pink-400 to-purple-600 h-full w-0 transition-all duration-500"></div>
-                </div>
-                <div class="flex justify-between text-xs text-gray-500">
-                    <span>달성률: <strong id="progressPercent" class="text-purple-700">0%</strong></span>
-                    <span id="progressRatio">0 / 0 완료</span>
-                </div>
-            </div>
-        </section>
-
+        <!-- Tab 3: Calendar -->
+        <div id="sectionCalendar" class="hidden bg-white p-4 rounded-2xl shadow-sm border border-pink-100">
+            <h3 class="font-jua text-purple-800 mb-2">📅 10월 학습 달력</h3>
+            <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
+        </div>
     </main>
 
-    <!-- MODAL: Database Config Modal -->
-    <div id="dbModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl border-2 border-purple-300">
-            <div class="flex justify-between items-center
+    <!-- Firebase SDK & Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+        // ==========================================
+        // 🛠️ 아래 3가지 칸에 아버님의 파이어베이스 값을 넣어주세요!
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBV_rnTIqxLquQAJ2i14S-Lin2y0bCIF3Q",
+            databaseURL: "https://kuromi-app-default-rtdb.firebaseio.com",
+            projectId: "kuromi-app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let state = {
+            points: 0,
+            tasks: [
+                { id: 1, text: "책 20분 읽기", points: 10, completed: false },
+                { id: 2, text: "숙제 다 하기", points: 15, completed: false }
+            ],
+            unlocked: ['kuromi'],
+            activeChar: 'kuromi',
+            isParent: false
+        };
+
+        const characters = [
+            { id: 'kuromi', name: '쿠로미', icon: '😈', cost: 0 },
+            { id: 'mymelody', name: '마이멜로디', icon: '🐰', cost: 30 },
+            { id: 'cinnamoroll', name: '시나모롤', icon: '🐶', cost: 50 }
+        ];
+
+        // Realtime Sync from Firebase
+        onValue(ref(db, 'jiwoo_habit_data'), (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                state = data;
+                render();
+            }
+        });
+
+        function save() {
+            set(ref(db, 'jiwoo_habit_data'), state);
+        }
+
+        window.addTask = function() {
+            const input = document.getElementById('taskInput');
+            if(!input.value.trim()) return;
+            state.tasks.push({ id: Date.now(), text: input.value, points: 10, completed: false });
+            input.value = '';
+            save();
+            render();
+        };
+
+        window.toggleTask = function(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if(task) {
+                task.completed = !task.completed;
+                state.points += task.completed ? task.points : -task.points;
+                if(task.completed) confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+                save();
+                render();
+            }
+        };
+
+        window.switchTab = function(tab) {
+            ['habits', 'shop', 'calendar'].forEach(t => {
+                document.getElementById(`section${t.charAt(0).toUpperCase() + t.slice(1)}`).classList.toggle('hidden', t !== tab);
+                document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`).className = `flex-1 py-2 rounded-lg ${t === tab ? 'bg-white shadow text-purple-900 font-bold' : ''}`;
+            });
+        };
+
+        window.toggleParentMode = function() {
+            state.isParent = !state.isParent;
+            document.getElementById('parentBtn').innerText = `👤 부모님 모드: ${state.isParent ? 'ON' : 'OFF'}`;
+        };
+
+        function render() {
+            document.getElementById('userPoints').innerText = `${state.points} P`;
+            
+            // Tasks
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = state.tasks.map(t => `
+                <div onclick="toggleTask(${t.id})" class="p-3 bg-white rounded-xl border border-pink-100 flex justify-between items-center cursor-pointer shadow-sm">
+                    <span class="${t.completed ? 'line-through text-gray-400' : ''}">${t.text}</span>
+                    <span class="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded-full font-bold">+${t.points}P</span>
+                </div>
+            `).join('');
+
+            // Shop
+            document.getElementById('shopGrid').innerHTML = characters.map(c => `
+                <div class="bg-white p-3 rounded-2xl text-center border border-pink-100">
+                    <div class="text-3xl">${c.icon}</div>
+                    <div class="font-jua text-sm mt-1">${c.name}</div>
+                    <button class="mt-2 text-xs bg-purple-600 text-white w-full py-1 rounded-lg">${c.cost}P</button>
+                </div>
+            `).join('');
+        }
+
+        render();
+    </script>
+</body>
+</html>
