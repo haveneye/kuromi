@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>쿠로미와 함께하는 학습 습관</title>
+    <title>쿠로미 학습 습관 매니저</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Canvas Confetti CDN -->
@@ -21,755 +21,101 @@
             font-family: 'Jua', sans-serif;
         }
         
-        .bg-kuromi-light { background-color: #f5f3ff; }
         .bg-kuromi-card { background-color: #ffffff; }
-        .border-kuromi { border-color: #c084fc; }
-        .text-kuromi { color: #7e22ce; }
-        .bg-kuromi-btn { background-color: #a855f7; }
-        .bg-kuromi-btn:hover { background-color: #9333ea; }
+        .border-kuromi { border-color: #f472b6; }
+        .text-kuromi { color: #8b5cf6; }
+        .bg-kuromi-btn { background-color: #c084fc; }
+        .bg-kuromi-btn:hover { background-color: #a855f7; }
         
         .bounce-short {
             animation: bounce 0.6s ease infinite alternate;
         }
         @keyframes bounce {
             0% { transform: translateY(0); }
-            100% { transform: translateY(-8px); }
+            100% { transform: translateY(-6px); }
         }
 
-        /* Custom scrollbar for modal */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #c084fc;
-            border-radius: 10px;
-        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #f472b6; border-radius: 10px; }
     </style>
 </head>
-<body class="min-h-screen pb-12 text-gray-800 select-none">
+<body class="min-h-screen pb-12 text-gray-800 select-none bg-pink-100">
 
-    <!-- Top Navigation / Header -->
-    <header class="bg-purple-900 text-white p-4 shadow-md sticky top-0 z-30">
+    <!-- Top Header -->
+    <header class="bg-purple-900 text-white p-4 shadow-md sticky top-0 z-30 border-b-4 border-pink-300">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
-                <!-- Kuromi Mini Logo SVG -->
-                <svg class="w-8 h-8 fill-current text-pink-400" viewBox="0 0 100 100">
-                    <path d="M50 15 C30 15 15 30 15 50 C15 70 30 85 50 85 C70 85 85 70 85 50 C85 30 70 15 50 15 Z" fill="#2e1065"/>
-                    <path d="M25 25 L10 5 L35 20 Z" fill="#2e1065"/>
-                    <path d="M75 25 L90 5 L65 20 Z" fill="#2e1065"/>
-                    <circle cx="38" cy="48" r="5" fill="#ffffff"/>
-                    <circle cx="62" cy="48" r="5" fill="#ffffff"/>
-                    <circle cx="39" cy="49" r="2" fill="#000000"/>
-                    <circle cx="61" cy="49" r="2" fill="#000000"/>
-                    <path d="M47 62 Q50 67 53 62" stroke="#f472b6" stroke-width="3" fill="none"/>
-                    <path d="M50 32 L54 38 L60 38 L55 42 L57 48 L50 44 L43 48 L45 42 L40 38 L46 38 Z" fill="#f472b6"/>
+                <!-- Sanrio / Kuromi Graphic SVG -->
+                <svg class="w-9 h-9" viewBox="0 0 100 100">
+                    <path d="M50 15 C30 15 15 30 15 50 C15 70 30 85 50 85 C70 85 85 70 85 50 C85 30 70 15 50 15 Z" fill="#3b0764"/>
+                    <path d="M22 22 L8 2 L32 18 Z" fill="#3b0764"/>
+                    <path d="M78 22 L92 2 L68 18 Z" fill="#3b0764"/>
+                    <circle cx="36" cy="48" r="6" fill="#ffffff"/>
+                    <circle cx="64" cy="48" r="6" fill="#ffffff"/>
+                    <circle cx="37" cy="49" r="2.5" fill="#000000"/>
+                    <circle cx="63" cy="49" r="2.5" fill="#000000"/>
+                    <path d="M46 62 Q50 67 54 62" stroke="#f472b6" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <path d="M50 30 L54 36 L60 36 L55 40 L57 46 L50 42 L43 46 L45 40 L40 36 L46 36 Z" fill="#f472b6"/>
                 </svg>
-                <h1 class="font-jua text-xl tracking-wide text-pink-300">쿠로미 습관매니저</h1>
+                <h1 class="font-jua text-2xl tracking-wide text-pink-200 drop-shadow">쿠로미 습관매니저</h1>
             </div>
             
-            <div class="flex items-center space-x-2">
-                <!-- DB Config Button -->
-                <button onclick="openDbConfigModal()" class="bg-purple-800 text-pink-200 text-xs px-2 py-1.5 rounded-lg border border-purple-600 flex items-center gap-1 hover:bg-purple-700">
-                    <span>⚙️ DB 연동</span>
+            <div class="flex items-center space-x-1.5">
+                <button onclick="openDbConfigModal()" class="bg-purple-800 text-pink-200 text-xs px-2 py-1.5 rounded-xl border border-pink-400/50 hover:bg-purple-700 font-jua">
+                    ⚙️ DB연동
                 </button>
-                <!-- Parent Mode Toggle -->
-                <button id="parentToggleBtn" onclick="toggleParentMode()" class="bg-purple-800 text-xs px-2.5 py-1.5 rounded-lg border border-purple-600 font-bold text-pink-200 flex items-center gap-1">
-                    <span>👨‍👩‍👧 부모모드: OFF</span>
+                <button id="parentToggleBtn" onclick="toggleParentMode()" class="bg-pink-500 text-white text-xs px-2.5 py-1.5 rounded-xl font-jua shadow hover:bg-pink-600">
+                    👨‍👩‍👧 부모모드
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Realtime Connection Status Bar -->
-    <div id="dbStatusBanner" class="bg-yellow-100 text-yellow-800 text-xs text-center py-1 px-2 font-medium border-b border-yellow-200 flex justify-center items-center gap-1">
-        <span>⚠️ 로컬 모드 사용 중 (파이어베이스 DB를 연동하면 엄마/아빠 폰과 실시간 연결됩니다)</span>
+    <!-- DB Status Banner -->
+    <div id="dbStatusBanner" class="bg-pink-200 text-purple-900 text-xs text-center py-1.5 px-2 font-bold border-b border-pink-300">
+        ⚠️ 데이터베이스 미연동 상태 (⚙️ DB연동 버튼을 눌러 설정값을 넣으면 실시간 연결됩니다)
     </div>
 
     <!-- Main Container -->
     <main class="max-w-md mx-auto p-4 space-y-4">
 
         <!-- Active Profile Card -->
-        <section class="bg-white rounded-2xl p-4 shadow-sm border-2 border-purple-200 flex items-center justify-between">
+        <section class="bg-white rounded-3xl p-4 shadow-lg border-2 border-purple-200 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div id="profileAvatar" class="w-12 h-12 rounded-full bg-purple-100 border-2 border-purple-300 flex items-center justify-center text-2xl shadow-inner">
+                <div id="profileAvatar" class="w-14 h-14 rounded-full bg-purple-100 border-2 border-pink-300 flex items-center justify-center text-3xl shadow-inner">
                     😈
                 </div>
                 <div>
-                    <div class="flex items-center gap-2">
-                        <span id="profileName" class="font-jua text-lg text-purple-950">프로필 선택 필요</span>
-                        <button onclick="openProfileSelector()" class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full hover:bg-purple-200">변경</button>
+                    <div class="flex items-center gap-1.5">
+                        <span id="profileName" class="font-jua text-xl text-purple-950">프로필</span>
+                        <button onclick="openProfileSelector()" class="text-xs bg-pink-100 text-pink-600 font-bold px-2 py-0.5 rounded-full hover:bg-pink-200">변경</button>
                     </div>
-                    <p class="text-xs text-gray-500" id="profileSubText">4자리 PIN으로 안전하게 보호됨</p>
+                    <p class="text-[11px] text-purple-400 font-medium" id="profileSubText">4자리 PIN 보호 중 🔒</p>
                 </div>
             </div>
             <div class="text-right">
-                <span class="text-xs text-purple-600 font-bold block">보유 포인트</span>
-                <span id="userPoints" class="font-jua text-2xl text-purple-700">0 P</span>
+                <span class="text-xs text-purple-500 font-bold block">내 포인트</span>
+                <span id="userPoints" class="font-jua text-3xl text-purple-700 drop-shadow-sm">0 P</span>
             </div>
         </section>
 
-        <!-- Parent Control Banner (Visible in Parent Mode) -->
-        <section id="parentNoticeBox" class="hidden bg-purple-900 text-white p-3 rounded-xl text-xs space-y-1 shadow-md border-2 border-pink-400">
+        <!-- Parent Notice Banner -->
+        <section id="parentNoticeBox" class="hidden bg-purple-900 text-white p-3 rounded-2xl text-xs space-y-1 shadow-md border-2 border-pink-300">
             <div class="flex justify-between items-center">
-                <span class="font-bold text-pink-300 text-sm">👑 부모님 실시간 관리 모드 활성화</span>
-                <span class="bg-pink-500 text-white text-[10px] px-1.5 py-0.5 rounded">실시간 수정 중</span>
+                <span class="font-jua text-pink-300 text-sm">👑 부모님 실시간 관리 모드</span>
+                <span class="bg-pink-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">수정 가능</span>
             </div>
-            <p class="text-purple-200">할 일을 직접 추가/삭제하거나 포인트를 임의로 보상할 수 있습니다.</p>
+            <p class="text-purple-200">할 일을 자유롭게 추가/삭제하거나 완수 여부를 대신 체크할 수 있습니다.</p>
         </section>
 
         <!-- Tabs Navigation -->
-        <div class="flex bg-purple-200 p-1 rounded-xl font-jua text-sm text-purple-800">
-            <button id="tabBtn1" onclick="switchTab('habits')" class="flex-1 py-2 rounded-lg bg-white shadow text-purple-900 font-bold text-center">
+        <div class="flex bg-purple-200 p-1.5 rounded-2xl font-jua text-base shadow-inner text-purple-800">
+            <button id="tabBtn1" onclick="switchTab('habits')" class="flex-1 py-2 rounded-xl bg-white shadow text-purple-900 font-bold text-center transition-all">
                 📝 오늘 할 일
             </button>
-            <button id="tabBtn2" onclick="switchTab('shop')" class="flex-1 py-2 rounded-lg text-center hover:bg-white/50">
+            <button id="tabBtn2" onclick="switchTab('shop')" class="flex-1 py-2 rounded-xl text-center hover:bg-white/50 transition-all">
                 🛍️ 캐릭터 샵
             </button>
-            <button id="tabBtn3" onclick="switchTab('calendar')" class="flex-1 py-2 rounded-lg text-center hover:bg-white/50">
+            <button id="tabBtn3" onclick="switchTab('calendar')" class="flex-1 py-2 rounded-xl text-center hover:bg-white/50 transition-all">
                 📅 학습 달력
             </button>
-        </div>
-
-        <!-- TAB 1: HABITS & TASKS -->
-        <section id="tab-habits" class="space-y-3">
-            <!-- Add Task Bar -->
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-purple-100 space-y-2">
-                <div class="flex gap-2">
-                    <input type="text" id="newTaskInput" placeholder="새로운 공부나 할 일 입력..." class="flex-1 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-purple-500">
-                    <div class="flex items-center bg-purple-50 border border-purple-200 rounded-xl px-2">
-                        <input type="number" id="newTaskPoints" value="10" min="1" max="100" class="w-10 bg-transparent text-center text-sm font-bold text-purple-700 focus:outline-none">
-                        <span class="text-xs text-purple-500 font-bold pr-1">P</span>
-                    </div>
-                    <button onclick="addNewTask()" class="bg-purple-600 text-white px-4 py-2 rounded-xl font-jua text-sm hover:bg-purple-700 shadow-sm">
-                        추가
-                    </button>
-                </div>
-                <!-- Preset Buttons -->
-                <div class="flex flex-wrap gap-1.5 pt-1">
-                    <span class="text-[11px] text-gray-400 self-center mr-1">추천:</span>
-                    <button onclick="addPresetTask('학교/학원 숙제하기', 10)" class="text-xs bg-pink-50 text-pink-600 px-2 py-1 rounded-lg border border-pink-200 hover:bg-pink-100">+ 숙제 10P</button>
-                    <button onclick="addPresetTask('책 20분 읽기', 15)" class="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-lg border border-purple-200 hover:bg-purple-100">+ 독서 15P</button>
-                    <button onclick="addPresetTask('일기 쓰기', 10)" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-100">+ 일기 10P</button>
-                    <button onclick="addPresetTask('방 정리하기', 5)" class="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-lg border border-green-200 hover:bg-green-100">+ 정리 5P</button>
-                </div>
-            </div>
-
-            <!-- Task List -->
-            <div id="taskList" class="space-y-2">
-                <!-- Dynamic tasks injected here -->
-            </div>
-        </section>
-
-        <!-- TAB 2: CHARACTER SHOP -->
-        <section id="tab-shop" class="hidden space-y-3">
-            <div class="bg-purple-100 p-3 rounded-xl text-xs text-purple-800 border border-purple-200 text-center font-medium">
-                ✨ 할 일을 완료해서 모은 포인트로 귀여운 산리오 친구들을 해금하세요!
-            </div>
-            <div id="shopGrid" class="grid grid-cols-2 gap-3">
-                <!-- Dynamic character cards injected here -->
-            </div>
-        </section>
-
-        <!-- TAB 3: CALENDAR & LOGS -->
-        <section id="tab-calendar" class="hidden space-y-3">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-purple-100 space-y-3">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-jua text-purple-900 text-base">📅 이번 달 학습 현황</h3>
-                    <span id="currentMonthStr" class="text-xs font-bold text-purple-600">2026년 10월</span>
-                </div>
-                
-                <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-400 pb-1">
-                    <div class="text-red-400">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-400">토</div>
-                </div>
-                <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center text-xs">
-                    <!-- Dynamic calendar days injected here -->
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-purple-100 space-y-2">
-                <h4 class="font-jua text-sm text-purple-900">🏆 오늘의 습관 완성도</h4>
-                <div class="w-full bg-gray-100 h-4 rounded-full overflow-hidden border border-gray-200">
-                    <div id="progressBar" class="bg-gradient-to-r from-pink-400 to-purple-600 h-full w-0 transition-all duration-500"></div>
-                </div>
-                <div class="flex justify-between text-xs text-gray-500">
-                    <span>달성률: <strong id="progressPercent" class="text-purple-700">0%</strong></span>
-                    <span id="progressRatio">0 / 0 완료</span>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- MODAL 1: Database Setup Modal -->
-    <div id="dbModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl border-2 border-purple-300">
-            <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="font-jua text-lg text-purple-900">⚙️ 파이어베이스 DB 연결 설정</h3>
-                <button onclick="closeDbConfigModal()" class="text-gray-400 text-xl font-bold hover:text-gray-600">&times;</button>
-            </div>
-            <p class="text-xs text-gray-600 leading-relaxed">
-                구글 Firebase 콘솔의 <strong>[프로젝트 설정]</strong>에서 복사한 값들을 아래에 입력하시면 부모님/아이 폰이 실시간으로 연결됩니다.
-            </p>
-            <div class="space-y-2 text-xs">
-                <div>
-                    <label class="block font-bold text-purple-800 mb-1">apiKey</label>
-                    <input type="text" id="cfgApiKey" placeholder="AIzaSy..." class="w-full bg-purple-50 border border-purple-200 p-2 rounded-lg focus:outline-none focus:border-purple-500">
-                </div>
-                <div>
-                    <label class="block font-bold text-purple-800 mb-1">databaseURL</label>
-                    <input type="text" id="cfgDbUrl" placeholder="https://your-app-default-rtdb.firebaseio.com" class="w-full bg-purple-50 border border-purple-200 p-2 rounded-lg focus:outline-none focus:border-purple-500">
-                </div>
-                <div>
-                    <label class="block font-bold text-purple-800 mb-1">projectId</label>
-                    <input type="text" id="cfgProjectId" placeholder="your-app-id" class="w-full bg-purple-50 border border-purple-200 p-2 rounded-lg focus:outline-none focus:border-purple-500">
-                </div>
-            </div>
-            <div class="flex gap-2 pt-2">
-                <button onclick="saveDbConfig()" class="flex-1 bg-purple-600 text-white py-2.5 rounded-xl font-jua text-sm hover:bg-purple-700 shadow">
-                    💾 설정 저장 및 연동
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL 2: Profile Selection & Auth Modal -->
-    <div id="profileModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl border-2 border-purple-300">
-            <h3 class="font-jua text-lg text-purple-900 text-center">👤 프로필 선택 및 비밀번호</h3>
-            
-            <!-- Existing Profiles List -->
-            <div id="profileList" class="space-y-2 max-h-40 overflow-y-auto">
-                <!-- Injected profiles -->
-            </div>
-
-            <hr class="border-purple-100">
-
-            <!-- PIN Input Area -->
-            <div id="pinArea" class="space-y-2">
-                <label id="pinLabel" class="block text-xs font-bold text-purple-800">선택한 프로필의 4자리 PIN 입력</label>
-                <input type="password" id="pinInput" maxlength="4" placeholder="••••" class="w-full text-center text-2xl tracking-widest bg-purple-50 border border-purple-300 py-2 rounded-xl focus:outline-none focus:border-purple-600">
-                
-                <div class="flex gap-2">
-                    <button onclick="confirmPinLogin()" class="flex-1 bg-purple-600 text-white py-2 rounded-xl font-jua text-sm hover:bg-purple-700">
-                        확인
-                    </button>
-                    <button onclick="openParentResetQuiz()" class="text-xs text-purple-500 underline self-center">
-                        PIN 잊음(부모님 리셋)
-                    </button>
-                </div>
-            </div>
-
-            <!-- Create New Profile Area -->
-            <div class="pt-2 border-t border-purple-100 space-y-2">
-                <span class="text-xs font-bold text-purple-900 block">➕ 새 프로필 만들기</span>
-                <div class="flex gap-2">
-                    <input type="text" id="newProfileName" placeholder="아이 이름" class="flex-1 text-xs bg-purple-50 border border-purple-200 p-2 rounded-lg">
-                    <input type="password" id="newProfilePin" maxlength="4" placeholder="PIN 4자리" class="w-20 text-xs bg-purple-50 border border-purple-200 p-2 rounded-lg text-center">
-                    <button onclick="createNewProfile()" class="bg-pink-500 text-white text-xs px-3 py-2 rounded-lg font-jua">
-                        생성
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL 3: Parent Quiz Reset Modal -->
-    <div id="quizModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl border-2 border-purple-300">
-            <h3 class="font-jua text-lg text-purple-900 text-center">🔒 부모님 인증 퀴즈</h3>
-            <p class="text-xs text-gray-600 text-center">아이의 비밀번호를 재설정하려면 수학 문제를 풀어주세요.</p>
-            
-            <div class="bg-purple-50 p-4 rounded-xl text-center">
-                <span id="quizQuestion" class="font-jua text-2xl text-purple-900">18 × 7 = ?</span>
-            </div>
-
-            <input type="number" id="quizAnswer" placeholder="정답 입력" class="w-full text-center text-lg bg-purple-50 border border-purple-300 py-2 rounded-xl focus:outline-none">
-            
-            <div class="space-y-2">
-                <input type="password" id="resetNewPin" maxlength="4" placeholder="새로운 4자리 PIN 입력" class="w-full text-center text-sm bg-purple-50 border border-purple-300 py-2 rounded-xl">
-                <button onclick="submitParentQuiz()" class="w-full bg-purple-600 text-white py-2 rounded-xl font-jua text-sm">
-                    비밀번호 변경하기
-                </button>
-                <button onclick="closeQuizModal()" class="w-full text-xs text-gray-400 py-1">취소</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase SDK Modular Import -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
-
-        // Application State
-        window.state = {
-            db: null,
-            firebaseConfig: null,
-            profiles: {},
-            currentProfileId: null,
-            isParentMode: false,
-            selectedProfileForAuth: null,
-            quizTargetPin: 0
-        };
-
-        // Predefined Sanrio Characters Data
-        window.sanrioCharacters = [
-            { id: 'kuromi', name: '쿠로미', cost: 0, icon: '😈', desc: '장난을 좋아하지만 마음은 따뜻해!' },
-            { id: 'mymelody', name: '마이멜로디', cost: 30, icon: '🐰', desc: '솔직하고 명랑한 귀여운 토끼' },
-            { id: 'cinnamoroll', name: '시나모롤', cost: 50, icon: '🐶', desc: '하늘을 날 수 있는 폭신한 강아지' },
-            { id: 'pompompurin', name: '폼폼푸린', cost: 70, icon: '🍮', desc: '골든리트리버 푸딩 친구' },
-            { id: 'pochacco', name: '포차코', cost: 100, icon: '🐾', desc: '호기심 많은 산책대장 강아지' }
-        ];
-
-        // Global Firebase Initialization
-        window.initFirebase = function(config) {
-            try {
-                const app = initializeApp(config);
-                window.state.db = getDatabase(app);
-                window.state.firebaseConfig = config;
-                
-                // Set Up Realtime Listener
-                const dbRef = ref(window.state.db, 'kuromi_app_data');
-                onValue(dbRef, (snapshot) => {
-                    const data = snapshot.val();
-                    if (data && data.profiles) {
-                        window.state.profiles = data.profiles;
-                        localStorage.setItem('kuromi_profiles_cache', JSON.stringify(data.profiles));
-                        renderApp();
-                    }
-                });
-
-                document.getElementById('dbStatusBanner').className = "bg-green-100 text-green-800 text-xs text-center py-1 px-2 font-medium border-b border-green-200 flex justify-center items-center gap-1";
-                document.getElementById('dbStatusBanner').innerHTML = "<span>🟢 파이어베이스 실시간 DB 연동 완료 (엄마/아빠 폰과 연결됨)</span>";
-            } catch (err) {
-                console.error("Firebase init failed:", err);
-                alert("파이어베이스 설정 정보가 올바르지 않습니다.");
-            }
-        };
-
-        // Window Load Setup
-        window.addEventListener('load', () => {
-            // Load saved config
-            const savedCfg = localStorage.getItem('kuromi_fb_cfg');
-            if (savedCfg) {
-                const cfg = JSON.parse(savedCfg);
-                document.getElementById('cfgApiKey').value = cfg.apiKey || '';
-                document.getElementById('cfgDbUrl').value = cfg.databaseURL || '';
-                document.getElementById('cfgProjectId').value = cfg.projectId || '';
-                window.initFirebase(cfg);
-            }
-
-            // Load Local Profiles Cache
-            const localCache = localStorage.getItem('kuromi_profiles_cache');
-            if (localCache) {
-                window.state.profiles = JSON.parse(localCache);
-            }
-
-            // Default profile setup if empty
-            if (Object.keys(window.state.profiles).length === 0) {
-                const defaultId = 'profile_default';
-                window.state.profiles[defaultId] = {
-                    id: defaultId,
-                    name: '지우',
-                    pin: '1234',
-                    points: 20,
-                    unlockedChars: ['kuromi'],
-                    activeChar: 'kuromi',
-                    tasks: [
-                        { id: 't1', text: '매일 책 15분 읽기', points: 10, completed: false },
-                        { id: 't2', text: '방 깔끔하게 정리하기', points: 10, completed: true }
-                    ],
-                    history: {}
-                };
-                saveDataToDb();
-            }
-
-            window.state.currentProfileId = Object.keys(window.state.profiles)[0];
-            renderApp();
-        });
-
-        // Sync Data helper
-        window.saveDataToDb = function() {
-            localStorage.setItem('kuromi_profiles_cache', JSON.stringify(window.state.profiles));
-            if (window.state.db) {
-                set(ref(window.state.db, 'kuromi_app_data'), {
-                    profiles: window.state.profiles,
-                    lastUpdated: Date.now()
-                });
-            }
-            renderApp();
-        };
-
-        // Global UI Render Function
-        window.renderApp = function() {
-            const profile = window.state.profiles[window.state.currentProfileId];
-            if (!profile) return;
-
-            // Render Header & Profile info
-            document.getElementById('profileName').innerText = profile.name;
-            document.getElementById('userPoints').innerText = `${profile.points} P`;
-            
-            const activeCharObj = window.sanrioCharacters.find(c => c.id === profile.activeChar) || window.sanrioCharacters[0];
-            document.getElementById('profileAvatar').innerText = activeCharObj.icon;
-
-            // Render Task List
-            renderTasks(profile);
-            // Render Shop
-            renderShop(profile);
-            // Render Calendar
-            renderCalendar(profile);
-        };
-
-        // Render Tasks
-        function renderTasks(profile) {
-            const taskList = document.getElementById('taskList');
-            taskList.innerHTML = '';
-
-            if (!profile.tasks || profile.tasks.length === 0) {
-                taskList.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">아직 등록된 할 일이 없어요! 위에 새로운 공부를 추가해 주세요.</div>`;
-                return;
-            }
-
-            profile.tasks.forEach(task => {
-                const item = document.createElement('div');
-                item.className = `p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
-                    task.completed ? 'bg-purple-50/60 border-purple-200 opacity-75' : 'bg-white border-purple-200 shadow-sm'
-                }`;
-
-                item.innerHTML = `
-                    <div class="flex items-center space-x-3 flex-1 cursor-pointer" onclick="toggleTask('${task.id}')">
-                        <div class="w-6 h-6 rounded-full border-2 border-purple-400 flex items-center justify-center ${
-                            task.completed ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white'
-                        }">
-                            ${task.completed ? '✓' : ''}
-                        </div>
-                        <span class="text-sm font-medium ${task.completed ? 'line-through text-purple-400' : 'text-gray-800'}">
-                            ${task.text}
-                        </span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-xs font-bold px-2 py-0.5 rounded-full ${task.completed ? 'bg-purple-100 text-purple-600' : 'bg-pink-100 text-pink-600'}">
-                            +${task.points}P
-                        </span>
-                        ${window.state.isParentMode ? `
-                            <button onclick="deleteTask('${task.id}')" class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
-                        ` : ''}
-                    </div>
-                `;
-                taskList.appendChild(item);
-            });
-        }
-
-        // Render Shop
-        function renderShop(profile) {
-            const shopGrid = document.getElementById('shopGrid');
-            shopGrid.innerHTML = '';
-
-            window.sanrioCharacters.forEach(char => {
-                const isUnlocked = profile.unlockedChars.includes(char.id);
-                const isActive = profile.activeChar === char.id;
-
-                const card = document.createElement('div');
-                card.className = `bg-white p-3.5 rounded-2xl border text-center space-y-2 relative shadow-sm ${
-                    isActive ? 'border-2 border-purple-600 ring-2 ring-purple-200' : 'border-purple-100'
-                }`;
-
-                card.innerHTML = `
-                    <div class="text-4xl py-1 bounce-short">${char.icon}</div>
-                    <div>
-                        <h4 class="font-jua text-sm text-purple-950">${char.name}</h4>
-                        <p class="text-[10px] text-gray-400">${char.desc}</p>
-                    </div>
-                    <div>
-                        ${isActive ? `
-                            <span class="inline-block w-full text-xs bg-purple-600 text-white py-1.5 rounded-xl font-jua">사용 중</span>
-                        ` : isUnlocked ? `
-                            <button onclick="selectCharacter('${char.id}')" class="w-full text-xs bg-purple-100 text-purple-700 py-1.5 rounded-xl font-jua hover:bg-purple-200">장착하기</button>
-                        ` : `
-                            <button onclick="buyCharacter('${char.id}',${char.cost})" class="w-full text-xs bg-pink-500 text-white py-1.5 rounded-xl font-jua hover:bg-pink-600 shadow-sm">
-                                ${char.cost} P 해금
-                            </button>
-                        `}
-                    </div>
-                `;
-                shopGrid.appendChild(card);
-            });
-        }
-
-        // Render Calendar
-        function renderCalendar(profile) {
-            const calendarGrid = document.getElementById('calendarGrid');
-            calendarGrid.innerHTML = '';
-
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth();
-
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-            for (let i = 0; i < firstDay; i++) {
-                calendarGrid.appendChild(document.createElement('div'));
-            }
-
-            let todayCompletedCount = 0;
-            let todayTotalCount = profile.tasks.length;
-
-            profile.tasks.forEach(t => { if(t.completed) todayCompletedCount++; });
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dayBox = document.createElement('div');
-                const isToday = (d === today.getDate());
-                
-                dayBox.className = `p-1.5 rounded-xl border flex flex-col items-center justify-center min-h-[42px] ${
-                    isToday ? 'bg-purple-100 border-purple-400 font-bold' : 'bg-gray-50/50 border-gray-100'
-                }`;
-
-                let stamp = '';
-                if (isToday && todayTotalCount > 0 && todayCompletedCount === todayTotalCount) {
-                    stamp = '👑';
-                } else if (isToday && todayCompletedCount > 0) {
-                    stamp = '⭐';
-                }
-
-                dayBox.innerHTML = `
-                    <span class="text-[10px] ${isToday ? 'text-purple-900' : 'text-gray-500'}">${d}</span>
-                    <span class="text-xs mt-0.5">${stamp}</span>
-                `;
-                calendarGrid.appendChild(dayBox);
-            }
-
-            // Progress bar
-            const percent = todayTotalCount === 0 ? 0 : Math.round((todayCompletedCount / todayTotalCount) * 100);
-            document.getElementById('progressBar').style.width = `${percent}%`;
-            document.getElementById('progressPercent').innerText = `${percent}%`;
-            document.getElementById('progressRatio').innerText = `${todayCompletedCount} / ${todayTotalCount} 완료`;
-        }
-
-        // Interactivity Functions
-        window.toggleTask = function(taskId) {
-            const profile = window.state.profiles[window.state.currentProfileId];
-            const task = profile.tasks.find(t => t.id === taskId);
-            if (!task) return;
-
-            task.completed = !task.completed;
-            if (task.completed) {
-                profile.points += parseInt(task.points || 10);
-                confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
-            } else {
-                profile.points = Math.max(0, profile.points - parseInt(task.points || 10));
-            }
-            saveDataToDb();
-        };
-
-        window.addNewTask = function() {
-            const input = document.getElementById('newTaskInput');
-            const ptsInput = document.getElementById('newTaskPoints');
-            const text = input.value.trim();
-            const pts = parseInt(ptsInput.value) || 10;
-
-            if (!text) return;
-
-            const profile = window.state.profiles[window.state.currentProfileId];
-            profile.tasks.push({
-                id: 't_' + Date.now(),
-                text: text,
-                points: pts,
-                completed: false
-            });
-
-            input.value = '';
-            ptsInput.value = '10';
-            saveDataToDb();
-        };
-
-        window.addPresetTask = function(text, pts) {
-            const profile = window.state.profiles[window.state.currentProfileId];
-            profile.tasks.push({
-                id: 't_' + Date.now(),
-                text: text,
-                points: pts,
-                completed: false
-            });
-            saveDataToDb();
-        };
-
-        window.deleteTask = function(taskId) {
-            const profile = window.state.profiles[window.state.currentProfileId];
-            profile.tasks = profile.tasks.filter(t => t.id !== taskId);
-            saveDataToDb();
-        };
-
-        window.buyCharacter = function(charId, cost) {
-            const profile = window.state.profiles[window.state.currentProfileId];
-            if (profile.points < cost) {
-                alert('포인트가 부족해요! 할 일을 완수해서 포인트를 더 모아보세요!');
-                return;
-            }
-
-            profile.points -= cost;
-            profile.unlockedChars.push(charId);
-            profile.activeChar = charId;
-            confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
-            saveDataToDb();
-        };
-
-        window.selectCharacter = function(charId) {
-            const profile = window.state.profiles[window.state.currentProfileId];
-            profile.activeChar = charId;
-            saveDataToDb();
-        };
-
-        window.toggleParentMode = function() {
-            window.state.isParentMode = !window.state.isParentMode;
-            const btn = document.getElementById('parentToggleBtn');
-            const noticeBox = document.getElementById('parentNoticeBox');
-
-            if (window.state.isParentMode) {
-                btn.className = "bg-pink-600 text-xs px-2.5 py-1.5 rounded-lg border border-pink-400 font-bold text-white flex items-center gap-1";
-                btn.innerHTML = "<span>👨‍👩‍👧 부모모드: ON</span>";
-                noticeBox.classList.remove('hidden');
-            } else {
-                btn.className = "bg-purple-800 text-xs px-2.5 py-1.5 rounded-lg border border-purple-600 font-bold text-pink-200 flex items-center gap-1";
-                btn.innerHTML = "<span>👨‍👩‍👧 부모모드: OFF</span>";
-                noticeBox.classList.add('hidden');
-            }
-            renderApp();
-        };
-
-        // Tab Switching
-        window.switchTab = function(tabName) {
-            ['habits', 'shop', 'calendar'].forEach((t, idx) => {
-                const el = document.getElementById(`tab-${t}`);
-                const btn = document.getElementById(`tabBtn${idx+1}`);
-                if (t === tabName) {
-                    el.classList.remove('hidden');
-                    btn.className = "flex-1 py-2 rounded-lg bg-white shadow text-purple-900 font-bold text-center";
-                } else {
-                    el.classList.add('hidden');
-                    btn.className = "flex-1 py-2 rounded-lg text-center hover:bg-white/50 text-purple-700";
-                }
-            });
-        };
-
-        // Modal Handlers
-        window.openDbConfigModal = function() {
-            document.getElementById('dbModal').classList.remove('hidden');
-        };
-        window.closeDbConfigModal = function() {
-            document.getElementById('dbModal').classList.add('hidden');
-        };
-
-        window.saveDbConfig = function() {
-            const apiKey = document.getElementById('cfgApiKey').value.trim();
-            const databaseURL = document.getElementById('cfgDbUrl').value.trim();
-            const projectId = document.getElementById('cfgProjectId').value.trim();
-
-            if (!apiKey || !databaseURL || !projectId) {
-                alert('모든 설정값을 입력해 주세요.');
-                return;
-            }
-
-            const cfg = { apiKey, databaseURL, projectId };
-            localStorage.setItem('kuromi_fb_cfg', JSON.stringify(cfg));
-            window.initFirebase(cfg);
-            closeDbConfigModal();
-            alert('파이어베이스 설정이 저장되었습니다!');
-        };
-
-        window.openProfileSelector = function() {
-            const list = document.getElementById('profileList');
-            list.innerHTML = '';
-
-            Object.values(window.state.profiles).forEach(p => {
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left p-2.5 bg-purple-50 hover:bg-purple-100 rounded-xl flex justify-between items-center text-xs text-purple-900 font-bold border border-purple-200";
-                btn.onclick = () => {
-                    window.state.selectedProfileForAuth = p.id;
-                    document.getElementById('pinLabel').innerText = `[${p.name}] 4자리 PIN 입력`;
-                };
-                btn.innerHTML = `<span>👤 ${p.name}</span> <span class="text-gray-400 font-normal">선택</span>`;
-                list.appendChild(btn);
-            });
-
-            document.getElementById('profileModal').classList.remove('hidden');
-        };
-
-        window.confirmPinLogin = function() {
-            const targetId = window.state.selectedProfileForAuth || window.state.currentProfileId;
-            const profile = window.state.profiles[targetId];
-            const pinInput = document.getElementById('pinInput').value;
-
-            if (profile && profile.pin === pinInput) {
-                window.state.currentProfileId = targetId;
-                document.getElementById('pinInput').value = '';
-                document.getElementById('profileModal').classList.add('hidden');
-                renderApp();
-            } else {
-                alert('4자리 비밀번호(PIN)가 올바르지 않습니다.');
-            }
-        };
-
-        window.createNewProfile = function() {
-            const name = document.getElementById('newProfileName').value.trim();
-            const pin = document.getElementById('newProfilePin').value.trim();
-
-            if (!name || pin.length !== 4) {
-                alert('이름과 4자리 비밀번호를 올바르게 입력해 주세요.');
-                return;
-            }
-
-            const newId = 'profile_' + Date.now();
-            window.state.profiles[newId] = {
-                id: newId,
-                name: name,
-                pin: pin,
-                points: 0,
-                unlockedChars: ['kuromi'],
-                activeChar: 'kuromi',
-                tasks: [
-                    { id: 't1', text: '매일 독서 15분', points: 10, completed: false }
-                ],
-                history: {}
-            };
-
-            window.state.currentProfileId = newId;
-            document.getElementById('newProfileName').value = '';
-            document.getElementById('newProfilePin').value = '';
-            document.getElementById('profileModal').classList.add('hidden');
-            saveDataToDb();
-        };
-
-        window.openParentResetQuiz = function() {
-            const num1 = Math.floor(Math.random() * 12) + 11;
-            const num2 = Math.floor(Math.random() * 8) + 3;
-            window.state.quizAns = num1 * num2;
-
-            document.getElementById('quizQuestion').innerText = `${num1} × ${num2} = ?`;
-            document.getElementById('quizModal').classList.remove('hidden');
-        };
-
-        window.closeQuizModal = function() {
-            document.getElementById('quizModal').classList.add('hidden');
-        };
-
-        window.submitParentQuiz = function() {
-            const userAns = parseInt(document.getElementById('quizAnswer').value);
-            const newPin = document.getElementById('resetNewPin').value.trim();
-
-            if (userAns === window.state.quizAns && newPin.length === 4) {
-                const targetId = window.state.selectedProfileForAuth || window.state.currentProfileId;
-                window.state.profiles[targetId].pin = newPin;
-                saveDataToDb();
-                closeQuizModal();
-                alert('비밀번호가 성공적으로 변경되었습니다!');
-            } else {
-                alert('정답이 틀렸거나 4자리 PIN 번호를 제대로 입력하지 않으셨습니다.');
-            }
-        };
-    </script>
-</body>
-</html>
