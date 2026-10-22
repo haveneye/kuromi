@@ -102,7 +102,7 @@
 <body class="flex justify-center items-center min-h-screen sm:py-4">
 
     <!-- 에러 발생 시 화면에 표시되는 영역 -->
-    <div id="error-screen" class="hidden fixed inset-red-500 inset-0 bg-red-100 text-red-800 p-6 z-50 flex flex-col items-center justify-center text-center">
+    <div id="error-screen" class="hidden fixed inset-0 bg-red-100 text-red-800 p-6 z-50 flex flex-col items-center justify-center text-center">
         <h2 class="text-lg font-bold mb-2">⚠️ 앱 실행 중 오류가 발생했습니다</h2>
         <p id="error-message" class="text-xs font-mono bg-white p-3 rounded border border-red-300 max-w-sm overflow-auto"></p>
     </div>
@@ -336,7 +336,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         let db = null;
         let auth = null;
@@ -394,7 +394,6 @@
             return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         }
 
-        // 글로벌 에러 핸들러 (백지 현상 방지)
         window.onerror = function(msg, url, line) {
             const errScreen = document.getElementById('error-screen');
             const errText = document.getElementById('error-message');
@@ -468,19 +467,19 @@
             }
         }
 
+        // ☁️ 공용 문서(config/profileList)를 통해 PC와 모바일 간 프로필 목록 완벽 공유
         window.loadProfiles = async function() {
             window.profileList = [];
+
             if (db && auth && auth.currentUser) {
                 try {
-                    const profilesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'profiles');
-                    const querySnapshot = await getDocs(profilesColRef);
-                    querySnapshot.forEach((docSnap) => {
-                        if (!window.profileList.includes(docSnap.id)) {
-                            window.profileList.push(docSnap.id);
-                        }
-                    });
+                    const listDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'profileList');
+                    const snap = await getDoc(listDocRef);
+                    if (snap.exists() && snap.data().list) {
+                        window.profileList = snap.data().list;
+                    }
                 } catch(e) {
-                    console.error("프로필 목록 로드 실패:", e);
+                    console.error("클라우드 프로필 목록 조회 실패:", e);
                 }
             }
 
@@ -489,7 +488,21 @@
                 const localList = JSON.parse(savedProfiles);
                 window.profileList = Array.from(new Set([...window.profileList, ...localList]));
             }
+
             localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
+        };
+
+        window.saveProfilesIndex = async function() {
+            localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
+
+            if (db && auth && auth.currentUser) {
+                try {
+                    const listDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'profileList');
+                    await setDoc(listDocRef, { list: window.profileList }, { merge: true });
+                } catch(e) {
+                    console.error("클라우드 프로필 목록 저장 실패:", e);
+                }
+            }
         };
 
         window.promptPinLogin = function(name) {
@@ -594,7 +607,7 @@
 
             if (!window.profileList.includes(name)) {
                 window.profileList.push(name);
-                localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
+                await window.saveProfilesIndex(); // 클라우드 공용 문서에 즉시 저장
             }
 
             window.state.pin = pin;
