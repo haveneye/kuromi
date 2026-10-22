@@ -1334,13 +1334,32 @@ function renderMessages(messages) {
 // 메시지 전송 함수
 async function sendChatMessage(customText = null, isSystem = false) {
     const input = document.getElementById('chatInput');
-    const text = customText || input.value.trim();
-    if (!text || !currentProfile) return;
+    const text = customText || (input ? input.value.trim() : '');
+    
+    console.log("전송 시도 텍스트:", text);
+    console.log("현재 프로필(currentProfile):", currentProfile);
 
-    // 현재 기기가 부모인지 아이인지 구분 (간단한 역할 구분)
-    const isParent = confirm("부모님으로 보내시겠습니까?\n(확인: 부모님 / 취소: 아이)");
-    const sender = isSystem ? 'system' : (isParent ? 'parent' : 'child');
-    const senderName = isSystem ? '🔔 시스템' : (isParent ? '👑 부모님' : '👧 아이');
+    if (!text) {
+        alert("메시지를 입력해주세요!");
+        return;
+    }
+    if (!currentProfile) {
+        alert("선택된 프로필(아이 이름)이 없습니다! 상단 프로필을 먼저 선택해주세요.");
+        return;
+    }
+
+    // 부모/아이 역할 선택 팝업
+    let sender = 'child';
+    let senderName = '👧 아이';
+
+    if (isSystem) {
+        sender = 'system';
+        senderName = '🔔 시스템';
+    } else {
+        const isParent = confirm("부모님으로 보내시겠습니까?\n(확인: 부모님 / 취소: 아이)");
+        sender = isParent ? 'parent' : 'child';
+        senderName = isParent ? '👑 부모님' : '👧 아이';
+    }
 
     const newMsg = {
         sender: sender,
@@ -1353,6 +1372,7 @@ async function sendChatMessage(customText = null, isSystem = false) {
         const docRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", currentProfile);
         const docSnap = await getDoc(docRef);
         let currentMsgs = [];
+        
         if (docSnap.exists() && docSnap.data().chatMessages) {
             currentMsgs = docSnap.data().chatMessages;
         }
@@ -1360,12 +1380,14 @@ async function sendChatMessage(customText = null, isSystem = false) {
         currentMsgs.push(newMsg);
         await setDoc(docRef, { chatMessages: currentMsgs }, { merge: true });
 
-        if (!customText) input.value = '';
+        console.s("메시지 전송 성공!");
+        if (input && !customText) input.value = '';
+
     } catch (err) {
-        console.error("메시지 전송 실패:", err);
+        console.error("파이어베이스 전송 실패 에러:", err);
+        alert("전송 중 오류 발생: " + err.message);
     }
 }
-
 // 🎉 미션 달성 시 자동 메시지 남기는 함수
 // (기존 미션 완료 처리 코드 안에서 이 함수를 호출해 주시면 됩니다!)
 function notifyMissionComplete(missionTitle) {
