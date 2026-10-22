@@ -59,6 +59,119 @@
             100% { transform: scale(1); opacity: 1; }
         }
         .animate-pop { animation: popIn 0.25s ease-out forwards; }
+
+//카카오톡추가
+        /* 쿠로미 메시지 모달 & UI 스타일 */
+.chat-btn-container {
+    text-align: center;
+    margin: 15px 0;
+}
+.chat-open-btn {
+    background: #a855f7;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(168, 85, 247, 0.3);
+    transition: transform 0.2s;
+}
+.chat-open-btn:active { transform: scale(0.95); }
+
+.chat-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+.chat-box {
+    background: white;
+    width: 90%;
+    max-width: 400px;
+    height: 500px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+.chat-header {
+    background: #a855f7;
+    color: white;
+    padding: 15px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: #fdf4ff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.msg-item {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 15px;
+    font-size: 14px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+.msg-item.parent {
+    align-self: flex-start;
+    background: #e9d5ff;
+    color: #581c87;
+    border-bottom-left-radius: 2px;
+}
+.msg-item.child {
+    align-self: flex-end;
+    background: #a855f7;
+    color: white;
+    border-bottom-right-radius: 2px;
+}
+.msg-item.system {
+    align-self: center;
+    background: #f3e8ff;
+    color: #7e22ce;
+    font-size: 12px;
+    border: 1px dashed #c084fc;
+    text-align: center;
+    max-width: 95%;
+}
+.chat-input-area {
+    padding: 10px;
+    background: white;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #f3e8ff;
+}
+.chat-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    outline: none;
+}
+.chat-send-btn {
+    background: #a855f7;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+        //////카카오톡추가
+        
     </style>
 </head>
 <body class="flex justify-center items-center min-h-screen sm:py-4">
@@ -1138,6 +1251,121 @@
                 window.openProfileModal();
             }
         };
+
+        //카카오톡 추가
+        // 메시지 모달 열기/닫기
+function openChat() {
+    document.getElementById('chatModal').style.display = 'flex';
+    listenMessages(); // 실시간 메시지 수신 시작
+}
+
+function closeChat() {
+    document.getElementById('chatModal').style.display = 'none';
+}
+
+// 실시간 메시지 수신 (Firestore)
+let unsubscribeMessages = null;
+function listenMessages() {
+    if (!db || !currentProfile) return;
+    
+    // 기존 수신 취소
+    if (unsubscribeMessages) unsubscribeMessages();
+
+    const msgRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", currentProfile);
+    
+    unsubscribeMessages = onSnapshot(msgRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            const messages = data.chatMessages || [];
+            renderMessages(messages);
+        }
+    });
+}
+
+// 화면에 메시지 렌더링
+function renderMessages(messages) {
+    const container = document.getElementById('chatMessages');
+    container.innerHTML = '';
+
+    messages.forEach(msg => {
+        const div = document.createElement('div');
+        div.className = `msg-item ${msg.sender}`;
+        
+        let timeStr = msg.time ? new Date(msg.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+        div.innerHTML = `<strong>${msg.senderName}</strong>: ${msg.text} <br><span style="font-size:10px; opacity:0.7;">${timeStr}</span>`;
+        
+        container.appendChild(div);
+    });
+
+    container.scrollTop = container.scrollHeight; // 맨 아래로 스크롤
+}
+
+// 메시지 전송 함수
+async function sendChatMessage(customText = null, isSystem = false) {
+    const input = document.getElementById('chatInput');
+    const text = customText || input.value.trim();
+    if (!text || !currentProfile) return;
+
+    // 현재 기기가 부모인지 아이인지 구분 (간단한 역할 구분)
+    const isParent = confirm("부모님으로 보내시겠습니까?\n(확인: 부모님 / 취소: 아이)");
+    const sender = isSystem ? 'system' : (isParent ? 'parent' : 'child');
+    const senderName = isSystem ? '🔔 시스템' : (isParent ? '👑 부모님' : '👧 아이');
+
+    const newMsg = {
+        sender: sender,
+        senderName: senderName,
+        text: text,
+        time: new Date().toISOString()
+    };
+
+    try {
+        const docRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", currentProfile);
+        const docSnap = await getDoc(docRef);
+        let currentMsgs = [];
+        if (docSnap.exists() && docSnap.data().chatMessages) {
+            currentMsgs = docSnap.data().chatMessages;
+        }
+
+        currentMsgs.push(newMsg);
+        await setDoc(docRef, { chatMessages: currentMsgs }, { merge: true });
+
+        if (!customText) input.value = '';
+    } catch (err) {
+        console.error("메시지 전송 실패:", err);
+    }
+}
+
+// 🎉 미션 달성 시 자동 메시지 남기는 함수
+// (기존 미션 완료 처리 코드 안에서 이 함수를 호출해 주시면 됩니다!)
+function notifyMissionComplete(missionTitle) {
+    sendChatMessage(`🎉 미션 완료! '${missionTitle}' 습관을 완수했어요!`, true);
+}
+
+        //카카오톡 추가
     </script>
+
+    ///카카오톡 추가
+    <!-- 쿠로미 대화함 버튼 및 모달 -->
+<div class="chat-btn-container">
+    <button class="chat-open-btn" onclick="openChat()">✉️ 쿠로미 메시지함 열기</button>
+</div>
+
+<div id="chatModal" class="chat-modal">
+    <div class="chat-box">
+        <div class="chat-header">
+            <span>💌 쿠로미 대화함</span>
+            <button onclick="closeChat()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+        </div>
+        <div id="chatMessages" class="chat-messages">
+            <!-- 실시간 메시지가 들어오는 곳 -->
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" class="chat-input" placeholder="메시지를 입력하세요..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+            <button class="chat-send-btn" onclick="sendChatMessage()">전송</button>
+        </div>
+    </div>
+</div>
+//카카오톡 추가
+    
 </body>
 </html>
