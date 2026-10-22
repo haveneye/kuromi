@@ -422,6 +422,55 @@
             appId: "G-VY4718JGJ1"
         };
 
+        //추가 한것//
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        let db = null;
+        let auth = null;
+
+        // 시스템에 내장된 파이어스토어 설정 연결
+        try {
+            const app = initializeApp(typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+                apiKey: "AIzaSy...", // 기본 설정 또는 기본값
+                authDomain: "kuromi-study.firebaseapp.com",
+                projectId: "kuromi-study",
+                storageBucket: "kuromi-study.appspot.com",
+                messagingSenderId: "123456789",
+                appId: "1:123456789:web:abcdef"
+            });
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            // 익명 로그인 후 클라우드 실시간 동기화 시작
+            signInAnonymously(auth).then(() => {
+                const docRef = doc(db, "habit_app", "jiwoo_shared_data");
+                onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const cloudData = docSnap.data();
+                        if (cloudData && cloudData.profiles) {
+                            state.profiles = cloudData.profiles;
+                            if (typeof renderApp === 'function') renderApp();
+                        }
+                    }
+                });
+            });
+        } catch (e) {
+            console.log("Local mode active");
+        }
+
+        // 데이터가 바뀔 때마다 클라우드에 자동 저장하는 함수
+        window.saveDataToCloud = function() {
+            if (db) {
+                setDoc(doc(db, "habit_app", "jiwoo_shared_data"), {
+                    profiles: state.profiles,
+                    lastUpdated: Date.now()
+                }).catch(err => console.error(err));
+            }
+            saveDataToCloud();
+        };
+
         // SANRIO SVGS
         const SANRIO_SVGS = {
             kuromi: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 80 80 Q 92 75, 88 62 Q 85 55, 92 50 L 95 56 L 90 52" fill="none" stroke="#2D2235" stroke-width="2.5"/><path d="M 12 52 C 12 20, 88 20, 88 52 C 88 78, 76 86, 50 86 C 24 86, 12 78, 12 52 Z" fill="#2D2235"/><path d="M 22 36 Q 4 12, 22 8 Q 32 18, 28 36 Z" fill="#2D2235"/><path d="M 78 36 Q 96 12, 78 8 Q 68 18, 72 36 Z" fill="#2D2235"/><circle cx="11" cy="11" r="5" fill="#F472B6"/><circle cx="89" cy="11" r="5" fill="#F472B6"/><ellipse cx="50" cy="58" rx="27" ry="21" fill="#FFFFFF"/><ellipse cx="37" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/><ellipse cx="63" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/><ellipse cx="50" cy="58" rx="1.5" ry="1.2" fill="#F472B6"/><path d="M 45 62 Q 50 66, 55 62" fill="none" stroke="#2D2235" stroke-width="1.8"/><circle cx="50" cy="31" r="7.5" fill="#F472B6"/></svg>`,
