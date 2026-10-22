@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>쿠로미와 산리오 친구들의 공부 습관 💜</title>
+    <title>쿠로미와 산리오 친구들의 공부 습관 💜 (실시간 연동)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -302,6 +302,15 @@
                 <h3 class="font-jua text-purple-900 text-xs">✨ 학습 목표 추가</h3>
                 <button onclick="closeAddTaskModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xs"></i></button>
             </div>
+            
+            <p class="text-[11px] text-purple-500 font-jua mb-1">추천 항목:</p>
+            <div class="flex flex-wrap gap-1 mb-2.5">
+                <button onclick="applyPreset('📖 독서 20분 읽기', 10)" class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg">📖 독서(10P)</button>
+                <button onclick="applyPreset('✏️ 수학 문제집 2장', 15)" class="text-[10px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded-lg">✏️ 수학(15P)</button>
+                <button onclick="applyPreset('📚 영단어 10개 외우기', 10)" class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg">📚 영어(10P)</button>
+                <button onclick="applyPreset('🎹 예체능 연습하기', 20)" class="text-[10px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded-lg">🎹 예체능(20P)</button>
+            </div>
+
             <input type="text" id="custom-task-input" placeholder="공부할 내용을 적어주세요!" class="w-full border-2 border-purple-100 rounded-xl p-2 text-xs mb-2.5 font-dodum">
             <div class="bg-purple-50 p-2 rounded-xl border border-purple-100 mb-3">
                 <div class="flex justify-between items-center mb-1">
@@ -352,7 +361,7 @@
             appId: "1:713556925410:web:76ef2b7dcff8138ad637bb"
         };
 
-        // 🎀 산리오 정교한 SVG 아이콘 원본 복구
+        // 🎀 산리오 캐릭터 SVG 원본 복구
         const SANRIO_SVGS = {
             kuromi: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 80 80 Q 92 75, 88 62 Q 85 55, 92 50 L 95 56 L 90 52" fill="none" stroke="#2D2235" stroke-width="2.5"/><path d="M 12 52 C 12 20, 88 20, 88 52 C 88 78, 76 86, 50 86 C 24 86, 12 78, 12 52 Z" fill="#2D2235"/><path d="M 22 36 Q 4 12, 22 8 Q 32 18, 28 36 Z" fill="#2D2235"/><path d="M 78 36 Q 96 12, 78 8 Q 68 18, 72 36 Z" fill="#2D2235"/><circle cx="11" cy="11" r="5" fill="#F472B6"/><circle cx="89" cy="11" r="5" fill="#F472B6"/><ellipse cx="50" cy="58" rx="27" ry="21" fill="#FFFFFF"/><ellipse cx="37" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/><ellipse cx="63" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/><ellipse cx="50" cy="58" rx="1.5" ry="1.2" fill="#F472B6"/><path d="M 45 62 Q 50 66, 55 62" fill="none" stroke="#2D2235" stroke-width="1.8"/><circle cx="50" cy="31" r="7.5" fill="#F472B6"/></svg>`,
             mymelody: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 16 52 C 16 26, 84 26, 84 52 C 84 78, 74 86, 50 86 C 26 86, 16 78, 16 52 Z" fill="#F472B6"/><path d="M 22 42 Q 8 6, 28 8 Q 38 20, 32 42 Z" fill="#F472B6"/><path d="M 78 42 Q 92 6, 72 8 Q 62 20, 68 42 Z" fill="#F472B6"/><ellipse cx="50" cy="58" rx="25" ry="20" fill="#FFFFFF"/><ellipse cx="38" cy="56" rx="3" ry="4.5" fill="#2D2235"/><ellipse cx="62" cy="56" rx="3" ry="4.5" fill="#2D2235"/><ellipse cx="50" cy="59" rx="2.2" ry="1.6" fill="#FEF08A"/><circle cx="30" cy="34" r="5" fill="#FFFFFF"/></svg>`,
@@ -514,10 +523,22 @@
             }
         };
 
-        window.promptPinLogin = function(name) {
+        // 💡 핸드폰에서도 PC에서 만든 비밀번호가 일치하도록 클라우드에서 최신 데이터를 먼저 불러오는 기능 추가
+        window.promptPinLogin = async function(name) {
             window.targetLoginProfile = name;
             document.getElementById('pin-target-name').innerText = name;
             document.getElementById('pin-input').value = '';
+
+            if (db && auth && auth.currentUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', name);
+                    const snap = await getDoc(docRef);
+                    if (snap.exists()) {
+                        localStorage.setItem(`sanrio_app_profile_${name}`, JSON.stringify(snap.data()));
+                    }
+                } catch(e) {}
+            }
+
             document.getElementById('pin-login-modal').classList.remove('hidden');
         };
 
@@ -661,7 +682,7 @@
         function renderHeader() {
             document.getElementById('user-points').innerText = window.state.points;
             const activeChar = CHARACTERS.find(c => c.id === window.state.activeCharacter) || CHARACTERS[0];
-            document.getElementById('active-avatar-container').innerHTML = SANRIO_SVGS[activeChar.id];
+            document.getElementById('active-avatar-container').innerHTML = SANRIO_SVGS[activeChar.id] || SANRIO_SVGS['kuromi'];
             document.getElementById('active-char-name').innerText = activeChar.name;
             document.getElementById('character-speech').innerText = `"${window.currentProfileName || '친구'}야! ${activeChar.speech.replace(/^"|"$/g, '')}"`;
 
@@ -793,7 +814,7 @@
             if (tabName === 'calendar') window.renderCalendar();
         };
 
-        // 📅 달력 렌더링 및 상세 내역 복구
+        // 📅 달력 렌더링 및 완료 점, 상세 내역 복구
         window.renderCalendar = function() {
             const date = window.state.viewMonth;
             const year = date.getFullYear();
