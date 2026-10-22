@@ -1380,7 +1380,7 @@ async function sendChatMessage(customText = null, isSystem = false) {
         currentMsgs.push(newMsg);
         await setDoc(docRef, { chatMessages: currentMsgs }, { merge: true });
 
-        console.s("메시지 전송 성공!");
+        console.log("메시지 전송 성공!");
         if (input && !customText) input.value = '';
 
     } catch (err) {
