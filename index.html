@@ -335,4 +335,37 @@
 
             <div class="flex space-x-2">
                 <button onclick="closeParentResetModal()" class="flex-1 py-1.5 bg-gray-100 text-gray-600 rounded-xl font-jua text-xs">취소</button>
-                <button onclick="executePinReset
+                <button onclick="executePinReset()" class="flex-1 py-1.5 bg-pink-500 text-white rounded-xl font-jua text-xs shadow">재설정 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Add New Task with Custom Points -->
+    <div id="add-task-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-2 border-purple-200">
+            <div class="flex justify-between items-center mb-2.5">
+                <h3 class="font-jua text-purple-900 text-xs">✨ 학습 목표 추가</h3>
+                <button onclick="closeAddTaskModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xs"></i></button>
+            </div>
+            
+            <p class="text-[11px] text-purple-500 font-jua mb-1">추천 항목:</p>
+            <div class="flex flex-wrap gap-1 mb-2.5">
+                <button onclick="applyPreset('📖 독서 20분 읽기', 10)" class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg">📖 독서(10P)</button>
+                <button onclick="applyPreset('✏️ 수학 문제집 2장', 15)" class="text-[10px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded-lg">✏️ 수학(15P)</button>
+                <button onclick="applyPreset('📚 영단어 10개 외우기', 10)" class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg">📚 영어(10P)</button>
+                <button onclick="applyPreset('🎹 예체능 연습하기', 20)" class="text-[10px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded-lg">🎹 예체능(20P)</button>
+            </div>
+
+            <!-- Custom Title Input -->
+            <input type="text" id="custom-task-input" placeholder="공부할 내용을 적어주세요!" class="w-full border-2 border-purple-100 rounded-xl p-2 text-xs focus:outline-none focus:border-purple-400 mb-2.5 font-dodum">
+
+            <!-- Reward Points Selector -->
+            <div class="bg-purple-50 p-2 rounded-xl border border-purple-100 mb-3">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[11px] font-jua text-purple-900">⭐ 보상 포인트 설정:</span>
+                    <span id="point-preset-display" class="font-jua text-xs text-pink-500 font-bold">10 P</span>
+                </div>
+                <div class="flex space-x-1 mb-2">
+                    <button type="button" onclick="setPointPreset(5)" class="preset-btn flex-1 py-1 rounded-lg bg-white border border-purple-200 text-[10px] font-jua text-purple-700">5P</button>
+                    <button type="button" onclick="setPointPreset(10)" class="preset-btn flex-1 py-1 rounded-lg bg-purple-600 text-white border border-purple-600 text-[10px] font-jua">10P</button>
+                    <button type="button" onclick="setPointPreset(15)" class="preset-btn flex-1 py-1 rounded-lg bg-white border border-purple-200 text-[10px] font-j
