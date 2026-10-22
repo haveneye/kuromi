@@ -13,6 +13,35 @@
     <!-- Google Fonts (Jua & Gowun Dodum) -->
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet">
     <script>
+        // 1. 파이어베이스 초기화 및 실시간 데이터 동기화
+    const firebaseConfig = {
+        apiKey: "AIzaSyBV_rnTIqxLquQAJ2i14S-Lin2y0bCIF3Q",
+        databaseURL: "https://kuromi-app-default-rtdb.firebaseio.com",
+        projectId: "kuromi-app"
+    };
+    
+    // 파이어베이스 연결 실행
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // 실시간으로 데이터 감지해서 화면 업데이트하기
+    onValue(ref(db, 'kuromi_app_data'), (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.profiles) {
+            state.profiles = data.profiles;
+            renderApp(); // 화면 새로고침
+        }
+    });
+
+    // 데이터가 바뀔 때마다 파이어베이스에 저장하는 함수
+    function saveDataToDb() {
+        if (db) {
+            set(ref(db, 'kuromi_app_data'), {
+                profiles: state.profiles,
+                lastUpdated: Date.now()
+            });
+        }
+    }
         tailwind.config = {
             theme: {
                 extend: {
@@ -60,6 +89,10 @@
         }
         .animate-pop { animation: popIn 0.25s ease-out forwards; }
     </style>
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+</script>
 </head>
 <body class="flex justify-center items-center min-h-screen sm:py-4">
 
