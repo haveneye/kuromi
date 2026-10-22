@@ -1284,14 +1284,14 @@
         };
 
         
+let unsubscribeMessages = null;
+
 // 1. 대화창 열기/닫기
 window.openChat = function() {
     const modal = document.getElementById('chatModal');
     if (modal) {
         modal.style.display = 'flex';
-        if (typeof window.listenMessages === 'function') {
-            window.listenMessages();
-        }
+        window.listenMessages(); // 열릴 때 실시간 수신 시작
     } else {
         alert("대화창(chatModal)을 찾을 수 없습니다.");
     }
@@ -1303,40 +1303,120 @@ window.closeChat = function() {
     if (window.unsubscribeMessages) window.unsubscribeMessages();
 };
 
-// 2. 100% 실행되는 진단용 전송 함수
-window.sendChatMessage = async function() {
-    const input = document.getElementById('chatInput');
-    if (!input) {
-        alert("입력창을 찾을 수 없습니다.");
-        return;
-    }
-
-    const text = input.value.trim();
-    if (!text) {
-        alert("메시지를 입력해 주세요!");
-        return;
-    }
-
-    // 현재 앱에서 쓰고 있는 진짜 프로필 이름 찾기
+// 2. 실시간 메시지 수신 (리스닝 함수)
+window.listenMessages = function() {
     let activeProfile = window.currentProfile || 
                         (typeof currentProfile !== 'undefined' ? currentProfile : null) || 
                         (typeof selectedProfile !== 'undefined' ? selectedProfile : null);
 
     if (!activeProfile) {
-        activeProfile = prompt("파이어베이스에 저장할 프로필(아이 이름)을 정확히 입력해주세요:", "");
-        if (!activeProfile) return;
+        activeProfile = "기본아이"; // 프로필이 없을 때의 임시 안전장치
     }
 
-    // 💡 저장될 파이어베이스 전체 경로 미리 확인
-    const collectionPath = "artifacts/kuromi-app-default/public/data/profiles";
-    const docName = activeProfile;
-    
-    console.log("🔥 저장 시도 경로:", collectionPath, "-> 문서:", docName);
+    if (window.unsubscribeMessages) window.unsubscribeMessages();
 
     try {
-        const isParent = confirm("부모님으로 보내시겠습니까?\n[확인]: 부모님 / [취소]: 아이");
-        const sender = isParent ? 'parent' : 'child';
-        const senderName = isParent ? '👑 부모님' : '👧 아이';
+        const msgRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", activeProfile);
+        
+        window.unsubscribeMessages = onSnapshot(msgRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const messages = data.chatMessages || [];
+                window.renderMessages(messages);
+            } else {
+                const container = document.getElementById('chatMessages');
+                if (container) {
+                    container.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px; margin-top:20px;">첫 메시지를 남겨보세요! 💌</div>';
+                }
+            }
+        });
+    } catch (err) {
+        console.error("실시간 수신 에러:", err);
+    }
+};
+
+// 3. 화면에 메시지 그려주기 (랜더링 함수)
+window.renderMessages = function(messages) {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+
+    if (!messages || messages.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px; margin-top:20px;">메시지가 없습니다. 첫 메시지를 남겨보세요! 💌</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+    messages.forEach(msg => {
+        const div = document.createElement('div');
+        div.style.margin = "8px 0";
+        div.style.padding = "10px 14px";
+        div.style.borderRadius = "14px";
+        div.style.maxWidth = "75%";
+        div.style.wordBreak = "break-word";
+        
+        // 보낸 사람에 따른 말풍선 위치 및 색상 디자인
+        if (msg.sender === 'parent') {
+            div.style.background = "#f3e8ff"; // 부모님 (연보라, 우측 정렬 느낌)
+            div.style.marginLeft = "auto";
+            div.style.borderBottomRightRadius = "2px";
+        } else if (msg.sender === 'system') {
+            div.style.background = "#f1f5f9"; // 시스템 알림 (중앙)
+            div.style.margin = "8px auto";
+            div.style.textAlign = "center";
+            div.style.maxWidth = "90%";
+        } else {
+            div.style.background = "#ffffff"; // 아이 (흰색, 좌측 정렬)
+            div.style.border = "1px solid #e2e8f0";
+            div.style.marginRight = "auto";
+            div.style.borderBottomLeftRadius = "2px";
+        }
+
+        let timeStr = '';
+        if (msg.time) {
+            try {
+                const d = new Date(msg.time);
+                timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch(e) {}
+        }
+
+        div.innerHTML = `
+            <div style="font-weight:bold; font-size:11px; margin-bottom:3px; color:#7e22ce;">${msg.senderName || '알 수 없음'}</div>
+            <div style="font-size:14px; color:#1e293b;">${msg.text}</div>
+            <div style="font-size:9px; opacity:0.5; text-align:right; margin-top:4px;">${timeStr}</div>
+        `;
+        container.appendChild(div);
+    });
+
+    container.scrollTop = container.scrollHeight; // 맨 아래로 스크롤
+};
+
+// 4. 메시지 전송 함수
+window.sendChatMessage = async function(customText = null, isSystem = false) {
+    const input = document.getElementById('chatInput');
+    const text = customText || (input ? input.value.trim() : '');
+
+    if (!text) {
+        alert("메시지를 입력해 주세요!");
+        return;
+    }
+
+    let activeProfile = window.currentProfile || 
+                        (typeof currentProfile !== 'undefined' ? currentProfile : null) || 
+                        (typeof selectedProfile !== 'undefined' ? selectedProfile : null) || 
+                        "기본아이";
+
+    try {
+        let sender = 'child';
+        let senderName = '👧 아이';
+
+        if (isSystem) {
+            sender = 'system';
+            senderName = '🔔 시스템';
+        } else {
+            const isParent = confirm("부모님으로 보내시겠습니까?\n[확인]: 부모님 / [취소]: 아이");
+            sender = isParent ? 'parent' : 'child';
+            senderName = isParent ? '👑 부모님' : '👧 아이';
+        }
 
         const newMsg = {
             sender: sender,
@@ -1356,19 +1436,16 @@ window.sendChatMessage = async function() {
         currentMsgs.push(newMsg);
         await setDoc(docRef, { chatMessages: currentMsgs }, { merge: true });
 
-        input.value = '';
+        if (input && !customText) input.value = '';
         
-        // 🎯 어디에 저장되었는지 경고창으로 확실히 보여줌
-        alert(`✅ 전송 완료!\n\n📁 파이어베이스 저장 위치:\nartifacts ➔ kuromi-app-default ➔ public ➔ data ➔ profiles ➔ [${activeProfile}]`);
-
-        if (typeof window.listenMessages === 'function') {
-            window.listenMessages();
-        }
+        // 전송 후 데이터 즉시 새로고침 반영
+        window.listenMessages();
 
     } catch (err) {
-        alert("파이어베이스 전송 에러: " + err.message);
+        alert("전송 실패: " + err.message);
     }
 };
+
 // 5. 미션 완료 자동 알림 연동
 window.notifyMissionComplete = function(missionTitle) {
     window.sendChatMessage(`🎉 미션 완료! '${missionTitle}' 습관을 완수했어요!`, true);
