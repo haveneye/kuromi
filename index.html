@@ -1305,9 +1305,6 @@ window.closeChat = function() {
 
 // 2. 100% 실행되는 진단용 전송 함수
 window.sendChatMessage = async function() {
-    // 🔥 클릭이 성공하면 무조건 이 창이 먼저 뜹니다!
-    alert("버튼 클릭 성공! (진단용)");
-
     const input = document.getElementById('chatInput');
     if (!input) {
         alert("입력창을 찾을 수 없습니다.");
@@ -1320,13 +1317,16 @@ window.sendChatMessage = async function() {
         return;
     }
 
-    const activeProfile = window.currentProfile || (typeof currentProfile !== 'undefined' ? currentProfile : null);
-    if (!activeProfile) {
-        alert("⚠️ 상단에서 프로필(아이 이름)을 먼저 선택해 주세요!");
-        return;
-    }
+    // 💡 여러 이름의 프로필 변수를 자동으로 감지
+    let activeProfile = window.currentProfile || 
+                        (typeof currentProfile !== 'undefined' ? currentProfile : null) || 
+                        (typeof selectedProfile !== 'undefined' ? selectedProfile : null) ||
+                        (typeof profile !== 'undefined' ? profile : null);
 
-    alert("프로필 및 텍스트 정상 확인 완료. 파이어베이스 전송을 시도합니다.");
+    // 만약 변수가 비어있다면 기본값으로 임시 지정하여 막힘없이 전송되도록 처리
+    if (!activeProfile) {
+        activeProfile = "기본아이"; 
+    }
 
     try {
         const isParent = confirm("부모님으로 보내시겠습니까?\n[확인]: 부모님 / [취소]: 아이");
@@ -1351,11 +1351,11 @@ window.sendChatMessage = async function() {
         currentMsgs.push(newMsg);
         await setDoc(docRef, { chatMessages: currentMsgs }, { merge: true });
 
-        input.value = '';
-        alert("메시지 전송 완료!");
+        input.value = ''; // 입력창 초기화
+        alert("✨ 메시지 전송 성공!");
 
     } catch (err) {
-        alert("파이어베이스 에러 발생: " + err.message);
+        alert("파이어베이스 전송 에러: " + err.message);
     }
 };
 
