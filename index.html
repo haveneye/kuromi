@@ -131,4 +131,208 @@
 
                 <!-- Parent Mode Toggle Badge -->
                 <div class="flex items-center space-x-1">
-                    <button id="parent-mode-btn" onclick="toggleParentMode()" class="bg-white
+                    <button id="parent-mode-btn" onclick="toggleParentMode()" class="bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded-full text-[10px] font-jua border border-white/30">
+                        <span>👨‍👩‍👧 부모님 모드: OFF</span>
+                    </button>
+                    <!-- Point Counter Badge -->
+                    <div class="bg-white/95 text-purple-900 px-2.5 py-1 rounded-full font-jua text-xs flex items-center space-x-1 shadow border border-purple-200">
+                        <span class="text-amber-400 text-sm">⭐</span>
+                        <span id="user-points" class="text-sm text-purple-900 font-bold">0</span>
+                        <span class="text-[10px] text-purple-500">P</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Avatar Card with Interactive Speech -->
+            <div class="flex items-center bg-white/25 backdrop-blur-md rounded-2xl p-2 border border-white/40 shadow-inner">
+                <div id="active-avatar-container" class="w-14 h-14 bg-white rounded-2xl p-1 shadow flex-shrink-0 animate-bounce-slow flex items-center justify-center border-2 border-purple-200">
+                    <!-- Dynamic SVG Character -->
+                </div>
+                <div class="ml-2.5 flex-1 overflow-hidden">
+                    <div class="flex items-center space-x-1.5">
+                        <span id="active-char-name" class="font-jua text-[10px] bg-purple-900/80 px-2 py-0.5 rounded-md text-white">쿠로미</span>
+                        <span class="text-[10px] text-purple-100 font-medium">응원 한마디</span>
+                    </div>
+                    <p id="character-speech" class="text-xs text-white mt-1 font-jua leading-relaxed truncate">"오늘도 대단해! 쿠로미가 응원할게! 🖤"</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dynamic Body Area -->
+        <main class="flex-1 overflow-y-auto p-3.5 bg-purple-50/60 relative" id="main-content">
+            
+            <!-- TAB 1: TODAY'S TASKS -->
+            <section id="tab-tasks" class="space-y-3">
+                <!-- Date Header Bar -->
+                <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
+                    <div>
+                        <span id="today-date-text" class="font-jua text-purple-900 text-sm">날짜 로딩 중...</span>
+                        <p class="text-[10px] text-gray-400">실시간 연동으로 부모님과 함께 확인해요!</p>
+                    </div>
+                    <button onclick="openAddTaskModal()" class="bg-gradient-to-r from-pink-400 to-purple-500 text-white px-2.5 py-1.5 rounded-xl text-xs font-jua shadow hover:opacity-95 active:scale-95 transition flex items-center space-x-1">
+                        <i class="fas fa-plus"></i>
+                        <span>할 일 추가</span>
+                    </button>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
+                    <div class="flex justify-between text-xs font-jua mb-1 text-purple-800">
+                        <span><span id="user-greeting-name" class="text-pink-500 font-bold">친구</span>의 목표 달성률</span>
+                        <span id="progress-percent" class="text-pink-500 font-bold">0%</span>
+                    </div>
+                    <div class="w-full bg-purple-100 rounded-full h-3 overflow-hidden p-0.5">
+                        <div id="progress-bar" class="bg-gradient-to-r from-pink-400 to-purple-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Task Items Container -->
+                <div class="space-y-2" id="task-list">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- TAB 2: SANRIO CHARACTER SHOP -->
+            <section id="tab-shop" class="hidden space-y-3">
+                <div class="text-center bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
+                    <h2 class="font-jua text-purple-900 text-sm">🎀 산리오 친구들 수집소</h2>
+                    <p class="text-[11px] text-gray-500 mt-0.5">포인트를 모아 귀여운 캐릭터들을 해금해보세요!</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5" id="character-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- TAB 3: PARENTS CALENDAR VIEW -->
+            <section id="tab-calendar" class="hidden space-y-3">
+                <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-purple-100">
+                    <div class="flex justify-between items-center mb-2.5">
+                        <h2 class="font-jua text-purple-900 text-xs flex items-center gap-1">
+                            <i class="fas fa-calendar-alt text-purple-500"></i>
+                            <span>부모님 실시간 학습 리포트</span>
+                        </h2>
+                        <div class="flex items-center space-x-1">
+                            <button onclick="changeMonth(-1)" class="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold hover:bg-purple-200">＜</button>
+                            <span id="calendar-month-title" class="font-jua text-xs px-1 text-purple-900">2026.10</span>
+                            <button onclick="changeMonth(1)" class="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold hover:bg-purple-200">＞</button>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Day Labels -->
+                    <div class="grid grid-cols-7 text-center font-jua text-xs text-purple-400 mb-1.5">
+                        <div class="text-red-400">일</div>
+                        <div>월</div>
+                        <div>화</div>
+                        <div>수</div>
+                        <div>목</div>
+                        <div>금</div>
+                        <div class="text-blue-400">토</div>
+                    </div>
+
+                    <!-- Calendar Dates Grid -->
+                    <div class="grid grid-cols-7 gap-1 text-center text-xs" id="calendar-days">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Selected Date Learning Details -->
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-purple-100 space-y-2">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <span id="selected-date-title" class="font-jua text-purple-900 text-xs">날짜를 클릭하세요</span>
+                        <span id="selected-date-points" class="text-[10px] bg-purple-100 text-purple-700 font-jua px-2 py-0.5 rounded-full">0P 완료</span>
+                    </div>
+                    <ul id="selected-date-tasks" class="space-y-1.5 text-xs text-gray-600 max-h-36 overflow-y-auto">
+                        <li class="text-center py-3 text-gray-400 font-jua">달력 날짜를 선택하면 실시간 기록이 나타납니다.</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bg-white border-t border-purple-100 flex justify-around p-2 text-center text-xs z-10">
+            <button onclick="switchTab('tasks')" id="nav-tasks" class="flex-1 py-1 flex flex-col items-center text-purple-600 font-jua transition">
+                <i class="fas fa-check-circle text-base mb-0.5"></i>
+                <span>오늘의 할일</span>
+            </button>
+            <button onclick="switchTab('shop')" id="nav-shop" class="flex-1 py-1 flex flex-col items-center text-gray-400 hover:text-purple-600 font-jua transition">
+                <i class="fas fa-heart text-base mb-0.5"></i>
+                <span>캐릭터 수집</span>
+            </button>
+            <button onclick="switchTab('calendar')" id="nav-calendar" class="flex-1 py-1 flex flex-col items-center text-gray-400 hover:text-purple-600 font-jua transition">
+                <i class="fas fa-calendar-check text-base mb-0.5"></i>
+                <span>부모님 달력</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Modal 1: Profile Select & PIN Login -->
+    <div id="profile-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-purple-300 text-center">
+            <div class="w-14 h-14 mx-auto mb-2 bg-purple-100 rounded-full p-1.5 border-2 border-purple-300 animate-bounce-slow flex items-center justify-center">
+                <svg viewBox="0 0 100 100" class="w-full h-full">
+                    <path d="M 12 52 C 12 20, 88 20, 88 52 C 88 78, 76 86, 50 86 C 24 86, 12 78, 12 52 Z" fill="#2D2235"/>
+                    <ellipse cx="50" cy="58" rx="27" ry="21" fill="#FFFFFF"/>
+                    <ellipse cx="37" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/>
+                    <ellipse cx="63" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/>
+                    <circle cx="50" cy="31" r="7.5" fill="#F472B6"/>
+                </svg>
+            </div>
+            <h3 class="font-jua text-purple-900 text-sm mb-1">🖤 프로필 선택 & 비밀번호</h3>
+            <p class="text-[11px] text-gray-500 mb-2 font-dodum">등록된 이름을 누르거나 새 프로필을 등록하세요.</p>
+
+            <div id="existing-profiles" class="space-y-1.5 mb-2.5 max-h-32 overflow-y-auto pr-0.5">
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="pt-2 border-t border-purple-100 space-y-2">
+                <input type="text" id="new-profile-input" placeholder="이름 입력 (예: 지우)" class="w-full border-2 border-purple-200 rounded-xl p-2 text-xs text-center font-jua focus:outline-none focus:border-purple-500">
+                <input type="password" id="new-profile-pin" maxlength="4" placeholder="🔒 비밀번호 4자리 숫자" class="w-full border-2 border-purple-200 rounded-xl p-2 text-xs text-center font-jua focus:outline-none focus:border-purple-500">
+                <button onclick="createNewProfile()" class="w-full py-2 bg-gradient-to-r from-pink-400 to-purple-600 text-white font-jua text-xs rounded-xl shadow active:scale-95 transition">
+                    ✨ 새 프로필 등록하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Enter PIN Code Login -->
+    <div id="pin-login-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-purple-400 text-center space-y-2.5">
+            <div class="w-10 h-10 bg-pink-100 text-pink-500 rounded-full flex items-center justify-center mx-auto text-lg">
+                <i class="fas fa-key"></i>
+            </div>
+            <h3 class="font-jua text-purple-900 text-xs">🔒 [<span id="pin-target-name" class="text-pink-500"></span>] 접속 비밀번호</h3>
+            <p class="text-[11px] text-gray-500">4자리 숫자를 입력해 주세요.</p>
+
+            <input type="password" id="pin-input" maxlength="4" placeholder="••••" class="w-full border-2 border-purple-300 rounded-xl p-2 text-center text-lg tracking-widest font-bold focus:outline-none focus:border-purple-600">
+
+            <div class="flex space-x-2 pt-1">
+                <button onclick="closePinLoginModal()" class="flex-1 py-1.5 bg-gray-100 text-gray-600 rounded-xl font-jua text-xs">취소</button>
+                <button onclick="verifyPinLogin()" class="flex-1 py-1.5 bg-purple-600 text-white rounded-xl font-jua text-xs shadow">확인</button>
+            </div>
+
+            <button onclick="openParentResetModal()" class="text-[10px] text-purple-500 underline font-jua pt-1 block mx-auto hover:text-purple-700">
+                🔑 비밀번호 재설정 (부모님 퀴즈)
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal 3: Parent Reset Math Verification -->
+    <div id="parent-reset-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-pink-300 text-center space-y-2.5">
+            <div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center mx-auto text-base">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <h3 class="font-jua text-purple-900 text-xs">👨‍👩‍👧 부모님 비밀번호 초기화</h3>
+            <p class="text-[11px] text-gray-500">수학 퀴즈 정답을 맞추면 새 비밀번호를 설정합니다.</p>
+
+            <div class="bg-purple-50 p-2 rounded-xl border border-purple-200">
+                <span id="math-quiz-question" class="font-jua text-purple-900 text-sm">18 × 7 = ?</span>
+            </div>
+
+            <input type="number" id="math-quiz-answer" placeholder="정답 입력" class="w-full border-2 border-purple-200 rounded-xl p-1.5 text-center font-jua text-xs focus:outline-none focus:border-purple-500">
+            <input type="password" id="reset-new-pin" maxlength="4" placeholder="새 비밀번호 4자리" class="w-full border-2 border-purple-200 rounded-xl p-1.5 text-center font-jua text-xs focus:outline-none focus:border-purple-500">
+
+            <div class="flex space-x-2">
+                <button onclick="closeParentResetModal()" class="flex-1 py-1.5 bg-gray-100 text-gray-600 rounded-xl font-jua text-xs">취소</button>
+                <button onclick="executePinReset()" class="flex-1 py-1.5 bg-pink-500 text-white rounded-xl font-jua text-xs
