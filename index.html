@@ -1460,29 +1460,29 @@ window.notifyMissionComplete = function(missionTitle) {
     
 
 <!-- 우측 하단 쿠로미 메시지 버튼 -->
-<div class="chat-btn-container">
-    <button class="chat-open-btn" onclick="openChat()">✉️ 쿠로미 메시지함 열기</button>
+<div style="position: fixed; right: 20px; bottom: 20px; z-index: 9999;">
+    <button onclick="openChat()" style="background: #a855f7; color: white; border: none; padding: 12px 18px; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-size: 14px;">✉️ 쿠로미 메시지함 열기</button>
 </div>
 
-<!-- 쿠로미 대화함 팝업 모달창 (세로 배치로 버튼 잘림 완전 해결) -->
-<div id="chatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 10000; justify-content: center; align-items: center; box-sizing: border-box; padding: 10px;">
-    <div style="background: white; width: 92%; max-width: 340px; height: 440px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box;">
+<!-- 쿠로미 대화함 팝업 모달창 (외부 스타일 충돌 방지형) -->
+<div id="chatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); z-index: 10000; justify-content: center; align-items: center; box-sizing: border-box; padding: 15px;">
+    <div style="background: white; width: 100%; max-width: 340px; height: 460px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.4); box-sizing: border-box;">
         
         <!-- 타이틀바 -->
-        <div style="background: linear-gradient(135deg, #a855f7, #7e22ce); color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px; flex-shrink: 0; box-sizing: border-box;">
+        <div style="background: #a855f7; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 15px; flex-shrink: 0; box-sizing: border-box;">
             <span>💌 쿠로미 대화함</span>
-            <button onclick="closeChat()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">✕</button>
+            <button onclick="closeChat()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 0;">✕</button>
         </div>
 
         <!-- 메시지 목록 출력 영역 -->
-        <div id="chatMessages" style="flex: 1; min-height: 0; padding: 12px; overflow-y: auto; background: #f9f5ff; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box;">
+        <div id="chatMessages" style="flex: 1; min-height: 0; padding: 15px; overflow-y: auto; background: #f9f5ff; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box;">
             <div style="text-align: center; color: #888; font-size: 13px; margin-top: 10px;">메시지함을 불러오는 중입니다...</div>
         </div>
 
-        <!-- 입력 및 전송 영역 (상하 배치: 입력창 밑에 전송 버튼이 꽉 차게 위치) -->
-        <div style="padding: 10px 12px; background: white; border-top: 1px solid #eee; flex-shrink: 0; box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 8px;">
-            <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." style="width: 100%; height: 38px; padding: 0 10px; border: 1px solid #ddd; border-radius: 10px; outline: none; font-size: 13px; box-sizing: border-box;" onkeypress="if(event.key==='Enter') sendChatMessage()">
-            <button onclick="sendChatMessage()" style="width: 100%; height: 38px; background: #a855f7; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 14px; box-sizing: border-box;">전송하기</button>
+        <!-- 입력 및 전송 영역 (외부 간섭 원천 차단 Flex 구조) -->
+        <div style="padding: 12px; background: white; border-top: 1px solid #eee; flex-shrink: 0; box-sizing: border-box; width: 100%; display: flex; gap: 8px; align-items: center;">
+            <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." style="flex: 1; height: 40px; padding: 0 12px; border: 1px solid #ddd; border-radius: 10px; outline: none; font-size: 14px; box-sizing: border-box;" onkeypress="if(event.key==='Enter') sendChatMessage()">
+            <button onclick="sendChatMessage()" style="background: #a855f7; color: white; border: none; height: 40px; padding: 0 16px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 14px; flex-shrink: 0; box-sizing: border-box; white-space: nowrap;">전송</button>
         </div>
 
     </div>
