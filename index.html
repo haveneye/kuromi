@@ -414,14 +414,16 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Global Firebase state
         let db = null;
         let auth = null;
         let unsubscribeDoc = null;
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'kuromi-study-default';
         
+        // ⭐ 파이어스토어 설정값
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyBV_rnTIqxLquQAJ2i14S-Lin2y0bCIF3Q",
             authDomain: "kuromi-app.firebaseapp.com",
@@ -431,6 +433,7 @@
             appId: "1:713556925410:web:76ef2b7dcff8138ad637bb"
         };
 
+        // SANRIO SVGS
         const SANRIO_SVGS = {
             kuromi: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 80 80 Q 92 75, 88 62 Q 85 55, 92 50 L 95 56 L 90 52" fill="none" stroke="#2D2235" stroke-width="2.5"/><path d="M 12 52 C 12 20, 88 20, 88 52 C 88 78, 76 86, 50 86 C 24 86, 12 78, 12 52 Z" fill="#2D2235"/><path d="M 22 36 Q 4 12, 22 8 Q 32 18, 28 36 Z" fill="#2D2235"/><path d="M 78 36 Q 96 12, 78 8 Q 68 18, 72 36 Z" fill="#2D2235"/><circle cx="11" cy="11" r="5" fill="#F472B6"/><circle cx="89" cy="11" r="5" fill="#F472B6"/><ellipse cx="50" cy="58" rx="27" ry="21" fill="#FFFFFF"/><ellipse cx="37" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/><ellipse cx="63" cy="54" rx="3.5" ry="5.5" fill="#2D2235"/><ellipse cx="50" cy="58" rx="1.5" ry="1.2" fill="#F472B6"/><path d="M 45 62 Q 50 66, 55 62" fill="none" stroke="#2D2235" stroke-width="1.8"/><circle cx="50" cy="31" r="7.5" fill="#F472B6"/></svg>`,
             mymelody: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 16 52 C 16 26, 84 26, 84 52 C 84 78, 74 86, 50 86 C 26 86, 16 78, 16 52 Z" fill="#F472B6"/><path d="M 22 42 Q 8 6, 28 8 Q 38 20, 32 42 Z" fill="#F472B6"/><path d="M 78 42 Q 92 6, 72 8 Q 62 20, 68 42 Z" fill="#F472B6"/><ellipse cx="50" cy="58" rx="25" ry="20" fill="#FFFFFF"/><ellipse cx="38" cy="56" rx="3" ry="4.5" fill="#2D2235"/><ellipse cx="62" cy="56" rx="3" ry="4.5" fill="#2D2235"/><ellipse cx="50" cy="59" rx="2.2" ry="1.6" fill="#FEF08A"/><circle cx="30" cy="34" r="5" fill="#FFFFFF"/></svg>`,
@@ -454,6 +457,7 @@
             { title: '🎹 예체능/악기 연습하기', points: 20 }
         ];
 
+        // Global State
         window.currentProfileName = '';
         window.profileList = [];
         window.targetLoginProfile = '';
@@ -478,6 +482,7 @@
             return `${y}-${m}-${d}`;
         }
 
+        // --- FIREBASE INITIALIZATION & ONLINE SYNC ---
         async function initFirebase() {
             try {
                 const app = initializeApp(firebaseConfig);
@@ -562,35 +567,36 @@
             }
         }
 
-        // ☁️ DB 컬렉션에서 프로필 목록 직접 스캔 (핸드폰/PC 양쪽 완벽 동기화)
+        // --- PROFILES & PIN ENGINE (클라우드 공용 프로필 목록 동기화) ---
         window.loadProfiles = async function() {
-            window.profileList = [];
+            const savedProfiles = localStorage.getItem('sanrio_app_profiles_index');
+            window.profileList = savedProfiles ? JSON.parse(savedProfiles) : [];
 
             if (db && auth && auth.currentUser) {
                 try {
-                    const profilesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'profiles');
-                    const querySnapshot = await getDocs(profilesColRef);
-                    querySnapshot.forEach((docSnap) => {
-                        if (!window.profileList.includes(docSnap.id)) {
-                            window.profileList.push(docSnap.id);
-                        }
-                    });
+                    const listDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'profileList');
+                    const snap = await getDoc(listDocRef);
+                    if (snap.exists() && snap.data().list) {
+                        window.profileList = snap.data().list;
+                        localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
+                    }
                 } catch(e) {
-                    console.error("클라우드 프로필 목록 조회 실패:", e);
+                    console.error("클라우드 프로필 목록 로드 실패:", e);
                 }
             }
-
-            const savedProfiles = localStorage.getItem('sanrio_app_profiles_index');
-            if (savedProfiles) {
-                const localList = JSON.parse(savedProfiles);
-                window.profileList = Array.from(new Set([...window.profileList, ...localList]));
-            }
-
-            localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
         };
 
         window.saveProfilesIndex = async function() {
             localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
+
+            if (db && auth && auth.currentUser) {
+                try {
+                    const listDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'profileList');
+                    await setDoc(listDocRef, { list: window.profileList }, { merge: true });
+                } catch(e) {
+                    console.error("클라우드 프로필 목록 저장 실패:", e);
+                }
+            }
         };
 
         window.promptPinLogin = function(name) {
@@ -675,7 +681,7 @@
         };
 
         window.openProfileModal = async function() {
-            await window.loadProfiles();
+            await window.loadProfiles(); // 모달 열 때 최신 클라우드 목록 반영
             const listContainer = document.getElementById('existing-profiles');
             listContainer.innerHTML = '';
 
@@ -725,7 +731,7 @@
 
             if (!window.profileList.includes(name)) {
                 window.profileList.push(name);
-                await window.saveProfilesIndex();
+                await window.saveProfilesIndex(); // 클라우드에 즉시 저장
             }
 
             window.state.pin = pin;
@@ -740,6 +746,7 @@
             window.loadProfileData(name);
         };
 
+        // PARENT RESET QUIZ
         window.openParentResetModal = function() {
             const num1 = Math.floor(Math.random() * 10) + 11;
             const num2 = Math.floor(Math.random() * 8) + 2;
@@ -793,6 +800,7 @@
             renderTasks();
         };
 
+        // RENDERING
         function renderHeader() {
             document.getElementById('user-points').innerText = window.state.points;
             
@@ -1004,6 +1012,7 @@
             window.renderCalendar();
         };
 
+        // TASK ACTIONS
         window.toggleTask = function(id) {
             const task = window.state.tasks.find(t => t.id === id);
             if (!task) return;
@@ -1181,9 +1190,10 @@
             });
         }
 
+        // STARTUP LOGIC (클라우드 프로필 목록 연동 대기)
         window.onload = async function() {
             await initFirebase();
-            await window.loadProfiles();
+            await window.loadProfiles(); // 👈 클라우드에서 최신 프로필 목록 로드 대기
 
             const lastActive = localStorage.getItem('sanrio_app_last_active_profile');
 
@@ -1368,43 +1378,44 @@
             window.sendChatMessage(`🎉 미션 완료! '${missionTitle}' 습관을 완수했어요!`, true);
         };
     </script>
+</div>
 
-    <!-- 우측 하단 쿠로미 메시지 버튼 -->
-    <div class="chat-btn-container">
-        <button class="chat-open-btn" onclick="openChat()">✉️ 쿠로미 메시지함 열기</button>
-    </div>
+<!-- 우측 하단 쿠로미 메시지 버튼 -->
+<div class="chat-btn-container">
+    <button class="chat-open-btn" onclick="openChat()">✉️ 쿠로미 메시지함 열기</button>
+</div>
 
-    <!-- 쿠로미 대화함 팝업 모달창 -->
-    <div id="chatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); z-index: 10000; justify-content: center; align-items: center; box-sizing: border-box; padding: 15px;">
-        <div style="background: white; width: 100%; max-width: 340px; height: 460px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.4); box-sizing: border-box;">
-            
-            <!-- 타이틀바 -->
-            <div style="background: #a855f7; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 15px; flex-shrink: 0; box-sizing: border-box;">
-                <span>💌 쿠로미 대화함</span>
-                <button onclick="closeChat()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 0;">✕</button>
-            </div>
-
-            <!-- 메시지 목록 출력 영역 -->
-            <div id="chatMessages" style="flex: 1; min-height: 0; padding: 15px; overflow-y: auto; background: #f9f5ff; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box;">
-                <div style="text-align: center; color: #888; font-size: 13px; margin-top: 10px;">메시지함을 불러오는 중입니다...</div>
-            </div>
-
-            <!-- 입력 및 전송 영역 -->
-            <div style="padding: 10px 12px; background: white; border-top: 1px solid #eee; flex-shrink: 0; box-sizing: border-box; width: 100%;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding-right: 6px;">
-                            <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." style="width: 100%; height: 38px; padding: 0 10px; border: 1px solid #ddd; border-radius: 10px; outline: none; font-size: 13px; box-sizing: border-box;" onkeypress="if(event.key==='Enter') sendChatMessage()">
-                        </td>
-                        <td style="width: 65px; white-space: nowrap;">
-                            <button onclick="sendChatMessage()" style="width: 100%; height: 38px; background: #a855f7; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 13px; box-sizing: border-box;">전송</button>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-
+<!-- 쿠로미 대화함 팝업 모달창 (테이블 레이아웃 적용으로 모바일 버튼 잘림 원천 차단) -->
+<div id="chatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); z-index: 10000; justify-content: center; align-items: center; box-sizing: border-box; padding: 15px;">
+    <div style="background: white; width: 100%; max-width: 340px; height: 460px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.4); box-sizing: border-box;">
+        
+        <!-- 타이틀바 -->
+        <div style="background: #a855f7; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 15px; flex-shrink: 0; box-sizing: border-box;">
+            <span>💌 쿠로미 대화함</span>
+            <button onclick="closeChat()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 0;">✕</button>
         </div>
+
+        <!-- 메시지 목록 출력 영역 -->
+        <div id="chatMessages" style="flex: 1; min-height: 0; padding: 15px; overflow-y: auto; background: #f9f5ff; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box;">
+            <div style="text-align: center; color: #888; font-size: 13px; margin-top: 10px;">메시지함을 불러오는 중입니다...</div>
+        </div>
+
+        <!-- 입력 및 전송 영역 (테이블 레이아웃: 핸드폰 화면에서 전송 버튼 잘림 방지) -->
+        <div style="padding: 10px 12px; background: white; border-top: 1px solid #eee; flex-shrink: 0; box-sizing: border-box; width: 100%;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding-right: 6px;">
+                        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." style="width: 100%; height: 38px; padding: 0 10px; border: 1px solid #ddd; border-radius: 10px; outline: none; font-size: 13px; box-sizing: border-box;" onkeypress="if(event.key==='Enter') sendChatMessage()">
+                    </td>
+                    <td style="width: 65px; white-space: nowrap;">
+                        <button onclick="sendChatMessage()" style="width: 100%; height: 38px; background: #a855f7; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 13px; box-sizing: border-box;">전송</button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
     </div>
+</div>
 
 </body>
 </html>
