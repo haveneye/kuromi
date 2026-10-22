@@ -1317,24 +1317,21 @@ window.sendChatMessage = async function() {
         return;
     }
 
-    // 1단계: 기존에 쓰이던 프로필 변수들 확인
+    // 현재 앱에서 쓰고 있는 진짜 프로필 이름 찾기
     let activeProfile = window.currentProfile || 
                         (typeof currentProfile !== 'undefined' ? currentProfile : null) || 
                         (typeof selectedProfile !== 'undefined' ? selectedProfile : null);
 
-    // 2단계: 변수에 없다면, 화면(HTML) 상단에 아이 이름이 표시된 곳에서 직접 찾아보기
     if (!activeProfile) {
-        const profileEl = document.querySelector('.profile-name, #profileName, .active-profile, [data-profile]');
-        if (profileEl) {
-            activeProfile = profileEl.innerText.trim() || profileEl.getAttribute('data-profile');
-        }
+        activeProfile = prompt("파이어베이스에 저장할 프로필(아이 이름)을 정확히 입력해주세요:", "");
+        if (!activeProfile) return;
     }
 
-    // 3단계: 그래도 못 찾았다면 직접 입력받기
-    if (!activeProfile) {
-        activeProfile = prompt("현재 아이(프로필) 이름을 입력해주세요:", "우리딸");
-        if (!activeProfile) return; // 취소하면 중단
-    }
+    // 💡 저장될 파이어베이스 전체 경로 미리 확인
+    const collectionPath = "artifacts/kuromi-app-default/public/data/profiles";
+    const docName = activeProfile;
+    
+    console.log("🔥 저장 시도 경로:", collectionPath, "-> 문서:", docName);
 
     try {
         const isParent = confirm("부모님으로 보내시겠습니까?\n[확인]: 부모님 / [취소]: 아이");
@@ -1348,7 +1345,6 @@ window.sendChatMessage = async function() {
             time: new Date().toISOString()
         };
 
-        // 실제 아이 이름 프로필 경로로 저장
         const docRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", activeProfile);
         const docSnap = await getDoc(docRef);
         let currentMsgs = [];
@@ -1360,10 +1356,11 @@ window.sendChatMessage = async function() {
         currentMsgs.push(newMsg);
         await setDoc(docRef, { chatMessages: currentMsgs }, { merge: true });
 
-        input.value = ''; // 입력창 초기화
-        alert(`✨ [${activeProfile}] 프로필로 메시지 전송 성공!`);
+        input.value = '';
+        
+        // 🎯 어디에 저장되었는지 경고창으로 확실히 보여줌
+        alert(`✅ 전송 완료!\n\n📁 파이어베이스 저장 위치:\nartifacts ➔ kuromi-app-default ➔ public ➔ data ➔ profiles ➔ [${activeProfile}]`);
 
-        // 전송 후 바로 화면 갱신
         if (typeof window.listenMessages === 'function') {
             window.listenMessages();
         }
