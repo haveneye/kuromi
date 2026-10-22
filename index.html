@@ -380,13 +380,15 @@
         let unsubscribeDoc = null;
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'kuromi-study-default';
+        
+        // ⭐ 아버님의 실제 파이어스토어 설정값 적용 완료
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "demo-api-key",
-            authDomain: "demo.firebaseapp.com",
-            projectId: "demo-kuromi-app",
-            storageBucket: "demo.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:demo"
+            apiKey: "AIzaSyBV_rnTIqxLquQAJ2i14S-Lin2y0bCIF3Q",
+            authDomain: "kuromi-app.firebaseapp.com",
+            projectId: "kuromi-app",
+            storageBucket: "kuromi-app.firebasestorage.app",
+            messagingSenderId: "713556925410",
+            appId: "G-VY4718JGJ1"
         };
 
         // SANRIO SVGS
@@ -493,7 +495,6 @@
         async function syncToOnlineCloud() {
             if (!currentProfileName) return;
 
-            // Always save to localStorage first
             const todayKey = getTodayKey();
             if (window.state.history[todayKey]) {
                 window.state.history[todayKey].tasks = window.state.tasks;
@@ -507,7 +508,6 @@
                 history: window.state.history
             }));
 
-            // Sync to Firestore if ready
             if (db && auth && auth.currentUser) {
                 try {
                     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', currentProfileName);
