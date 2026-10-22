@@ -1284,63 +1284,109 @@
         };
 
         
-        // 메시지 모달 열기/닫기
-function openChat() {
-    document.getElementById('chatModal').style.display = 'flex';
-    listenMessages(); // 실시간 메시지 수신 시작
-}
+     window.openChat = function() {
+    const modal = document.getElementById('chatModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        window.listenMessages(); // 실시간 수신 시작
+    } else {
+        alert("대화창(chatModal)을 찾을 수 없습니다.");
+    }
+};
 
-function closeChat() {
-    document.getElementById('chatModal').style.display = 'none';
-}
+window.closeChat = function() {
+    const modal = document.getElementById('chatModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    if (window.unsubscribeMessages) {
+        window.unsubscribeMessages();
+    }
+};
 
-// 실시간 메시지 수신 (Firestore)
-let unsubscribeMessages = null;
-function listenMessages() {
-    if (!db || !currentProfile) return;
-    
-    // 기존 수신 취소
-    if (unsubscribeMessages) unsubscribeMessages();
+// 2. 실시간 메시지 수신 함수
+window.listenMessages = function() {
+    if (typeof db === 'undefined' || !currentProfile) {
+        console.warn("DB 또는 프로필 정보가 비어있어 수신을 대기합니다.");
+        return;
+    }
 
-    const msgRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", currentProfile);
-    
-    unsubscribeMessages = onSnapshot(msgRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const messages = data.chatMessages || [];
-            renderMessages(messages);
-        }
-    });
-}
+    if (window.unsubscribeMessages) window.unsubscribeMessages();
 
-// 화면에 메시지 렌더링
-function renderMessages(messages) {
+    try {
+        const msgRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", currentProfile);
+        window.unsubscribeMessages = onSnapshot(msgRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const messages = data.chatMessages || [];
+                window.renderMessages(messages);
+            }
+        });
+    } catch (err) {
+        console.error("실시간 수신 에러:", err);
+    }
+};
+
+// 3. 메시지 화면 렌더링 함수
+window.renderMessages = function(messages) {
     const container = document.getElementById('chatMessages');
-    container.innerHTML = '';
+    if (!container) return;
 
+    if (!messages || messages.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px; margin-top:20px;">첫 메시지를 남겨보세요! 💌</div>';
+        return;
+    }
+
+    container.innerHTML = '';
     messages.forEach(msg => {
         const div = document.createElement('div');
-        div.className = `msg-item ${msg.sender}`;
+        div.className = `msg-item ${msg.sender || 'child'}`;
         
-        let timeStr = msg.time ? new Date(msg.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-        div.innerHTML = `<strong>${msg.senderName}</strong>: ${msg.text} <br><span style="font-size:10px; opacity:0.7;">${timeStr}</span>`;
-        
+        let timeStr = '';
+        if (msg.time) {
+            const d = new Date(msg.time);
+            timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        div.innerHTML = `
+            <div style="font-weight:bold; font-size:11px; margin-bottom:2px;">${msg.senderName || '알 수 없음'}</div>
+            <div>${msg.text}</div>
+            <div style="font-size:9px; opacity:0.6; text-align:right; margin-top:2px;">${timeStr}</div>
+        `;
         container.appendChild(div);
     });
 
-    container.scrollTop = container.scrollHeight; // 맨 아래로 스크롤
-}
+    container.scrollTop = container.scrollHeight;
+};
 
-// 메시지 전송 함수
-async function sendChatMessage(customText = null, isSystem = false) {
+// 4. 메시지 전송 함수
+window.sendChatMessage = async function(customText = null, isSystem = false) {
     const input = document.getElementById('chatInput');
-    const text = customText || input.value.trim();
-    if (!text || !currentProfile) return;
+    const text = customText || (input ? input.value.trim() : '');
 
-    // 현재 기기가 부모인지 아이인지 구분 (간단한 역할 구분)
-    const isParent = confirm("부모님으로 보내시겠습니까?\n(확인: 부모님 / 취소: 아이)");
-    const sender = isSystem ? 'system' : (isParent ? 'parent' : 'child');
-    const senderName = isSystem ? '🔔 시스템' : (isParent ? '👑 부모님' : '👧 아이');
+    if (!text) {
+        alert("메시지를 입력해 주세요!");
+        return;
+    }
+
+    if (typeof db === 'undefined' || !currentProfile) {
+        alert("상단에서 프로필(아이 이름)을 먼저 선택해 주세요!");
+        return;
+    }
+
+    let sender = 'child';
+    let senderName = '👧 아이';
+
+    if (isSystem) {
+        sender = 'system';
+        senderName = '🔔 알림';
+    } else {
+        const isParent = confirm("부모님으로 보내시겠습니까?\n[확인]: 부모님 / [취소]: 아이");
+        if (isParent) {
+            sender = 'parent';
+            senderName = '👑 부모님';
+        }
+    }
 
     const newMsg = {
         sender: sender,
@@ -1353,6 +1399,7 @@ async function sendChatMessage(customText = null, isSystem = false) {
         const docRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", currentProfile);
         const docSnap = await getDoc(docRef);
         let currentMsgs = [];
+        
         if (docSnap.exists() && docSnap.data().chatMessages) {
             currentMsgs = docSnap.data().chatMessages;
         }
@@ -1360,22 +1407,18 @@ async function sendChatMessage(customText = null, isSystem = false) {
         currentMsgs.push(newMsg);
         await setDoc(docRef, { chatMessages: currentMsgs }, { merge: true });
 
-        if (!customText) input.value = '';
-    } catch (err) {
-        console.error("메시지 전송 실패:", err);
-    }
-}
-// 🎉 미션 달성 시 자동 메시지 남기는 함수
-// (기존 미션 완료 처리 코드 안에서 이 함수를 호출해 주시면 됩니다!)
-function notifyMissionComplete(missionTitle) {
-    sendChatMessage(`🎉 미션 완료! '${missionTitle}' 습관을 완수했어요!`, true);
-}        
+        if (input && !customText) input.value = '';
 
-// 미션 달성 시 자동 알림 함수 전역 등록
+    } catch (err) {
+        console.error("전송 에러:", err);
+        alert("메시지 전송에 실패했습니다: " + err.message);
+    }
+};
+
+// 5. 미션 완료 자동 알림 연동
 window.notifyMissionComplete = function(missionTitle) {
     window.sendChatMessage(`🎉 미션 완료! '${missionTitle}' 습관을 완수했어요!`, true);
 };
-
     </script>
 
 
