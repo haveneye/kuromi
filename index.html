@@ -13,35 +13,6 @@
     <!-- Google Fonts (Jua & Gowun Dodum) -->
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet">
     <script>
-        // 1. 파이어베이스 초기화 및 실시간 데이터 동기화
-    const firebaseConfig = {
-        apiKey: "AIzaSyBV_rnTIqxLquQAJ2i14S-Lin2y0bCIF3Q",
-        databaseURL: "https://kuromi-app-default-rtdb.firebaseio.com",
-        projectId: "kuromi-app"
-    };
-    
-    // 파이어베이스 연결 실행
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // 실시간으로 데이터 감지해서 화면 업데이트하기
-    onValue(ref(db, 'kuromi_app_data'), (snapshot) => {
-        const data = snapshot.val();
-        if (data && data.profiles) {
-            state.profiles = data.profiles;
-            renderApp(); // 화면 새로고침
-        }
-    });
-
-    // 데이터가 바뀔 때마다 파이어베이스에 저장하는 함수
-    function saveDataToDb() {
-        if (db) {
-            set(ref(db, 'kuromi_app_data'), {
-                profiles: state.profiles,
-                lastUpdated: Date.now()
-            });            
-        }
-    }
         tailwind.config = {
             theme: {
                 extend: {
@@ -89,10 +60,6 @@
         }
         .animate-pop { animation: popIn 0.25s ease-out forwards; }
     </style>
-    <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
-</script>
 </head>
 <body class="flex justify-center items-center min-h-screen sm:py-4">
 
@@ -414,60 +381,12 @@
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'kuromi-study-default';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyBV_rnTIqxLquQAJ2i14S-Lin2y0bCIF3Q",
-            authDomain: "kuromi-app.firebaseapp.com",
-            projectId: "kuromi-app",
-            storageBucket: "kuromi-app.firebasestorage.app",
-            messagingSenderId: "713556925410",
-            appId: "G-VY4718JGJ1"
-        };
-
-        //추가 한것//
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        let db = null;
-        let auth = null;
-
-        // 시스템에 내장된 파이어스토어 설정 연결
-        try {
-            const app = initializeApp(typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-                apiKey: "AIzaSy...", // 기본 설정 또는 기본값
-                authDomain: "kuromi-study.firebaseapp.com",
-                projectId: "kuromi-study",
-                storageBucket: "kuromi-study.appspot.com",
-                messagingSenderId: "123456789",
-                appId: "1:123456789:web:abcdef"
-            });
-            auth = getAuth(app);
-            db = getFirestore(app);
-
-            // 익명 로그인 후 클라우드 실시간 동기화 시작
-            signInAnonymously(auth).then(() => {
-                const docRef = doc(db, "habit_app", "jiwoo_shared_data");
-                onSnapshot(docRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const cloudData = docSnap.data();
-                        if (cloudData && cloudData.profiles) {
-                            state.profiles = cloudData.profiles;
-                            if (typeof renderApp === 'function') renderApp();
-                        }
-                    }
-                });
-            });
-        } catch (e) {
-            console.log("Local mode active");
-        }
-
-        // 데이터가 바뀔 때마다 클라우드에 자동 저장하는 함수
-        window.saveDataToCloud = function() {
-            if (db) {
-                setDoc(doc(db, "habit_app", "jiwoo_shared_data"), {
-                    profiles: state.profiles,
-                    lastUpdated: Date.now()
-                }).catch(err => console.error(err));
-            }
+            apiKey: "demo-api-key",
+            authDomain: "demo.firebaseapp.com",
+            projectId: "demo-kuromi-app",
+            storageBucket: "demo.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:demo"
         };
 
         // SANRIO SVGS
