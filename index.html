@@ -61,34 +61,36 @@
         .animate-pop { animation: popIn 0.25s ease-out forwards; }
 
         /* 쿠로미 메시지 모달 & UI 스타일 */
+/* 쿠로미 메시지 버튼 완벽 정돈 스타일 */
 .chat-btn-container {
     width: 100%;
-    max-width: 100%;
-    text-align: center;
-    margin: 20px 0 10px 0;
-    padding: 0 10px;
-    box-sizing: border-box;
     display: flex;
     justify-content: center;
+    margin: 25px 0 15px 0;
+    clear: both;
 }
 
 .chat-open-btn {
     width: 100%;
-    max-width: 300px; /* 버튼이 앱 화면 폭에 맞춰 예쁘게 늘어남 */
-    background: #a855f7;
+    max-width: 320px;
+    background: linear-gradient(135deg, #a855f7, #9333ea);
     color: white;
     border: none;
-    padding: 12px 20px;
-    border-radius: 20px;
+    padding: 14px 20px;
+    border-radius: 25px;
     font-weight: bold;
-    font-size: 15px;
+    font-size: 16px;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(168, 85, 247, 0.3);
-    transition: transform 0.2s;
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .chat-open-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.96);
 }
 
 .chat-modal {
