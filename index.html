@@ -1317,15 +1317,23 @@ window.sendChatMessage = async function() {
         return;
     }
 
-    // 💡 여러 이름의 프로필 변수를 자동으로 감지
+    // 1단계: 기존에 쓰이던 프로필 변수들 확인
     let activeProfile = window.currentProfile || 
                         (typeof currentProfile !== 'undefined' ? currentProfile : null) || 
-                        (typeof selectedProfile !== 'undefined' ? selectedProfile : null) ||
-                        (typeof profile !== 'undefined' ? profile : null);
+                        (typeof selectedProfile !== 'undefined' ? selectedProfile : null);
 
-    // 만약 변수가 비어있다면 기본값으로 임시 지정하여 막힘없이 전송되도록 처리
+    // 2단계: 변수에 없다면, 화면(HTML) 상단에 아이 이름이 표시된 곳에서 직접 찾아보기
     if (!activeProfile) {
-        activeProfile = "기본아이"; 
+        const profileEl = document.querySelector('.profile-name, #profileName, .active-profile, [data-profile]');
+        if (profileEl) {
+            activeProfile = profileEl.innerText.trim() || profileEl.getAttribute('data-profile');
+        }
+    }
+
+    // 3단계: 그래도 못 찾았다면 직접 입력받기
+    if (!activeProfile) {
+        activeProfile = prompt("현재 아이(프로필) 이름을 입력해주세요:", "우리딸");
+        if (!activeProfile) return; // 취소하면 중단
     }
 
     try {
@@ -1340,6 +1348,7 @@ window.sendChatMessage = async function() {
             time: new Date().toISOString()
         };
 
+        // 실제 아이 이름 프로필 경로로 저장
         const docRef = doc(db, "artifacts", "kuromi-app-default", "public", "data", "profiles", activeProfile);
         const docSnap = await getDoc(docRef);
         let currentMsgs = [];
@@ -1352,13 +1361,17 @@ window.sendChatMessage = async function() {
         await setDoc(docRef, { chatMessages: currentMsgs }, { merge: true });
 
         input.value = ''; // 입력창 초기화
-        alert("✨ 메시지 전송 성공!");
+        alert(`✨ [${activeProfile}] 프로필로 메시지 전송 성공!`);
+
+        // 전송 후 바로 화면 갱신
+        if (typeof window.listenMessages === 'function') {
+            window.listenMessages();
+        }
 
     } catch (err) {
         alert("파이어베이스 전송 에러: " + err.message);
     }
 };
-
 // 5. 미션 완료 자동 알림 연동
 window.notifyMissionComplete = function(missionTitle) {
     window.sendChatMessage(`🎉 미션 완료! '${missionTitle}' 습관을 완수했어요!`, true);
