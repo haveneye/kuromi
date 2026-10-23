@@ -888,7 +888,19 @@
                 window.isParentMode = true;
                 window.parentDisplayName = parentRoleNames[role];
                 window.closeParentAccountModal();
+                window.closeProfileModal();
                 window.updateParentAccountUI();
+
+                const lastActive = localStorage.getItem('sanrio_app_last_active_profile');
+                const preferredProfile = window.currentProfileName && window.profileList.includes(window.currentProfileName)
+                    ? window.currentProfileName
+                    : (lastActive && window.profileList.includes(lastActive) ? lastActive : window.profileList[0]);
+                if (preferredProfile) {
+                    window.loadProfileData(preferredProfile);
+                } else {
+                    showToast('아이 프로필을 먼저 등록해주세요.');
+                    window.openProfileModal();
+                }
                 showToast(window.parentDisplayName + ' 계정으로 부모 메뉴를 열었어요.');
             } catch (error) {
                 console.error('부모 PIN 처리 실패:', error);
