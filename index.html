@@ -132,7 +132,6 @@
                 </button>
 
                 <div class="flex items-center space-x-1">
-                    <button id="parent-account-button" onclick="toggleParentAccess()" class="bg-white/20 hover:bg-white/30 text-white px-2 py-1 rounded-full text-[10px] font-jua border border-white/30">👨‍👩‍👧 부모님 메뉴</button>
                     <div class="bg-white/95 text-purple-900 px-2.5 py-1 rounded-full font-jua text-xs flex items-center space-x-1 shadow border border-purple-200">
                         <span class="text-amber-400 text-sm">⭐</span>
                         <span id="user-points" class="text-sm text-purple-900 font-bold">0</span>
@@ -142,14 +141,14 @@
             </div>
 
             <!-- Active Avatar Card with Interactive Speech -->
-            <div class="flex items-center bg-white/25 backdrop-blur-md rounded-2xl p-2 border border-white/40 shadow-inner">
+            <div id="active-character-card" class="flex items-center bg-white/25 backdrop-blur-md rounded-2xl p-2 border border-white/40 shadow-inner">
                 <div id="active-avatar-container" class="w-14 h-14 bg-white rounded-2xl p-1 shadow flex-shrink-0 animate-bounce-slow flex items-center justify-center border-2 border-purple-200">
                     <!-- Dynamic SVG Character -->
                 </div>
                 <div class="ml-2.5 flex-1 overflow-hidden">
                     <div class="flex items-center space-x-1.5">
                         <span id="active-char-name" class="font-jua text-[10px] bg-purple-900/80 px-2 py-0.5 rounded-md text-white">쿠로미</span>
-                        <span class="text-[10px] text-purple-100 font-medium">응원 한마디</span>
+                        <span id="active-mode-label" class="text-[10px] text-purple-100 font-medium">응원 한마디</span>
                     </div>
                     <p id="character-speech" class="text-xs text-white mt-1 font-jua leading-relaxed truncate">"오늘도 대단해! 쿠로미가 응원할게! 🖤"</p>
                 </div>
@@ -833,12 +832,6 @@
         }
 
         window.updateParentAccountUI = function() {
-            const button = document.getElementById('parent-account-button');
-            if (button) {
-                button.textContent = window.isParentMode
-                    ? '🔒 ' + (window.parentDisplayName || '부모님') + ' 잠그기'
-                    : '👨‍👩‍👧 부모님 메뉴';
-            }
             const addTaskButton = document.getElementById('add-task-button');
             if (addTaskButton) addTaskButton.classList.toggle('hidden', !window.isParentMode);
             if (typeof window.renderParentChildSelector === 'function') window.renderParentChildSelector();
@@ -987,10 +980,34 @@
 
         function renderHeader() {
             document.getElementById('user-points').innerText = window.state.points;
-            const activeChar = CHARACTERS.find(c => c.id === window.state.activeCharacter) || CHARACTERS[0];
-            document.getElementById('active-avatar-container').innerHTML = SANRIO_SVGS[activeChar.id] || SANRIO_SVGS['kuromi'];
-            document.getElementById('active-char-name').innerText = activeChar.name;
-            document.getElementById('character-speech').innerText = `"${window.currentProfileName || '친구'}야! ${activeChar.speech.replace(/^"|"$/g, '')}"`;
+            const avatar = document.getElementById('active-avatar-container');
+            const nameBadge = document.getElementById('active-char-name');
+            const modeLabel = document.getElementById('active-mode-label');
+            const speech = document.getElementById('character-speech');
+            const card = document.getElementById('active-character-card');
+
+            if (window.isParentMode) {
+                card.className = 'flex items-center bg-indigo-50/95 rounded-2xl p-2 border border-indigo-200 shadow-inner';
+                avatar.className = 'w-14 h-14 bg-white rounded-2xl p-1 shadow flex-shrink-0 flex items-center justify-center border-2 border-indigo-200';
+                avatar.innerHTML = '<i class="fas fa-user-shield text-indigo-600 text-2xl" aria-hidden="true"></i>';
+                nameBadge.className = 'font-jua text-[10px] bg-indigo-700 px-2 py-0.5 rounded-md text-white';
+                nameBadge.innerText = (window.parentDisplayName || '부모님') + ' 관리 모드';
+                modeLabel.className = 'text-[10px] text-indigo-600 font-medium';
+                modeLabel.innerText = '부모님 관리';
+                speech.className = 'text-xs text-indigo-900 mt-1 font-jua leading-relaxed truncate';
+                speech.innerText = '아이들의 미션과 포인트를 관리하고 있어요.';
+            } else {
+                const activeChar = CHARACTERS.find(c => c.id === window.state.activeCharacter) || CHARACTERS[0];
+                card.className = 'flex items-center bg-white/25 backdrop-blur-md rounded-2xl p-2 border border-white/40 shadow-inner';
+                avatar.className = 'w-14 h-14 bg-white rounded-2xl p-1 shadow flex-shrink-0 animate-bounce-slow flex items-center justify-center border-2 border-purple-200';
+                avatar.innerHTML = SANRIO_SVGS[activeChar.id] || SANRIO_SVGS['kuromi'];
+                nameBadge.className = 'font-jua text-[10px] bg-purple-900/80 px-2 py-0.5 rounded-md text-white';
+                nameBadge.innerText = activeChar.name;
+                modeLabel.className = 'text-[10px] text-purple-100 font-medium';
+                modeLabel.innerText = '응원 한마디';
+                speech.className = 'text-xs text-white mt-1 font-jua leading-relaxed truncate';
+                speech.innerText = `"${window.currentProfileName || '친구'}야! ${activeChar.speech.replace(/^"|"$/g, '')}"`;
+            }
 
             const now = new Date();
             const days = ['일', '월', '화', '수', '목', '금', '토'];
