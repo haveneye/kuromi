@@ -388,7 +388,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocFromServer, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         let db = null;
         let auth = null;
@@ -430,6 +430,7 @@
 
         window.currentProfileName = '';
         window.profileList = [];
+        window.profileLoadRequestId = 0;
         window.targetLoginProfile = '';
         window.currentQuizAnswer = 0;
         window.isParentMode = false;
@@ -497,30 +498,30 @@
 
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profileName);
             unsubscribeDoc = onSnapshot(docRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.data();
-                    window.state.pin = data.pin || window.state.pin;
-                    window.state.points = data.points ?? window.state.points;
-                    window.state.activeCharacter = data.activeCharacter || window.state.activeCharacter;
-                    window.state.unlockedCharacters = data.unlockedCharacters || window.state.unlockedCharacters;
-                    window.state.history = data.history || window.state.history;
+                if (window.currentProfileName !== profileName || !snapshot.exists()) return;
+                const data = snapshot.data();
+                window.state.pin = data.pin || window.state.pin;
+                window.state.points = data.points ?? window.state.points;
+                window.state.activeCharacter = data.activeCharacter || window.state.activeCharacter;
+                window.state.unlockedCharacters = data.unlockedCharacters || window.state.unlockedCharacters;
+                window.state.history = data.history || window.state.history;
 
-                    const todayKey = getTodayKey();
-                    if (!window.state.history[todayKey] || !Array.isArray(window.state.history[todayKey].tasks)) {
-                        window.state.history[todayKey] = {
-                            tasks: DEFAULT_TASKS.map((item, idx) => ({
-                                id: 'task_' + Date.now() + '_' + idx,
-                                title: item.title,
-                                points: item.points || 10,
-                                completed: false
-                            }))
-                        };
-                    }
-                    window.state.tasks = window.state.history[todayKey].tasks;
-                    renderHeader();
-                    renderTasks();
-                    renderShop();
+                const todayKey = getTodayKey();
+                if (!window.state.history[todayKey] || !Array.isArray(window.state.history[todayKey].tasks)) {
+                    window.state.history[todayKey] = {
+                        tasks: DEFAULT_TASKS.map((item, idx) => ({
+                            id: 'task_' + Date.now() + '_' + idx,
+                            title: item.title,
+                            points: item.points || 10,
+                            completed: false
+                        }))
+                    };
                 }
+                window.state.tasks = window.state.history[todayKey].tasks;
+                renderHeader();
+                renderTasks();
+                renderShop();
+                if (window.isParentMode) window.renderParentChildSelector();
             });
         }
 
@@ -651,21 +652,51 @@
             }
         };
 
-        window.loadProfileData = function(name) {
+        window.loadProfileData = async function(name) {
+            const requestId = ++window.profileLoadRequestId;
             window.currentProfileName = name;
-            const saved = localStorage.getItem(`sanrio_app_profile_${name}`);
-            if (saved) {
+
+            let cloudData = null;
+            let cloudReadSucceeded = false;
+            let profileRef = null;
+            if (db && auth && auth.currentUser) {
+                profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', name);
                 try {
-                    const parsed = JSON.parse(saved);
-                    window.state.pin = parsed.pin || '0000';
-                    window.state.points = parsed.points || 0;
-                    window.state.activeCharacter = parsed.activeCharacter || 'kuromi';
-                    window.state.unlockedCharacters = parsed.unlockedCharacters || ['kuromi'];
-                    window.state.history = parsed.history || {};
-                } catch (e) {}
+                    const snapshot = await getDocFromServer(profileRef);
+                    cloudReadSucceeded = true;
+                    if (snapshot.exists()) cloudData = snapshot.data();
+                } catch (error) {
+                    console.warn('Firebase 프로필을 읽지 못해 이 기기의 저장 내용을 사용합니다.', error);
+                }
+            }
+            if (requestId !== window.profileLoadRequestId || window.currentProfileName !== name) return;
+
+            let profileData = cloudData;
+            if (!profileData) {
+                try {
+                    const saved = localStorage.getItem('sanrio_app_profile_' + name);
+                    if (saved) profileData = JSON.parse(saved);
+                } catch (error) {
+                    console.warn('이 기기의 프로필 저장 내용을 읽지 못했습니다.', error);
+                }
+            }
+
+            if (profileData) {
+                window.state.pin = profileData.pin || '0000';
+                window.state.points = profileData.points ?? 0;
+                window.state.activeCharacter = profileData.activeCharacter || 'kuromi';
+                window.state.unlockedCharacters = profileData.unlockedCharacters || ['kuromi'];
+                window.state.history = profileData.history || {};
+            } else {
+                window.state.pin = '0000';
+                window.state.points = 0;
+                window.state.activeCharacter = 'kuromi';
+                window.state.unlockedCharacters = ['kuromi'];
+                window.state.history = {};
             }
 
             const todayKey = getTodayKey();
+            let seededDefaultTasks = false;
             if (!window.state.history[todayKey] || !Array.isArray(window.state.history[todayKey].tasks)) {
                 window.state.history[todayKey] = {
                     tasks: DEFAULT_TASKS.map((item, idx) => ({
@@ -675,12 +706,27 @@
                         completed: false
                     }))
                 };
+                seededDefaultTasks = true;
             }
             window.state.tasks = window.state.history[todayKey].tasks;
-            syncToOnlineCloud();
-            subscribeOnlineDoc(name);
-            localStorage.setItem('sanrio_app_last_active_profile', name);
 
+            try {
+                localStorage.setItem('sanrio_app_profile_' + name, JSON.stringify(window.state));
+                localStorage.setItem('sanrio_app_last_active_profile', name);
+            } catch (error) {
+                console.warn('이 기기에 프로필을 저장하지 못했습니다.', error);
+            }
+
+            if (cloudReadSucceeded && (!cloudData || seededDefaultTasks) && requestId === window.profileLoadRequestId) {
+                try {
+                    await setDoc(profileRef, { ...window.state, updatedAt: new Date().toISOString() }, { merge: true });
+                } catch (error) {
+                    console.error('Firebase 프로필 초기 저장 실패:', error);
+                }
+            }
+
+            if (requestId !== window.profileLoadRequestId || window.currentProfileName !== name) return;
+            subscribeOnlineDoc(name);
             document.getElementById('current-profile-name').innerText = name;
             const greetingName = document.getElementById('user-greeting-name');
             if (greetingName) greetingName.innerText = name;
@@ -739,6 +785,7 @@
             window.state.activeCharacter = 'kuromi';
             window.state.unlockedCharacters = ['kuromi'];
             window.state.history = {};
+            localStorage.setItem('sanrio_app_profile_' + name, JSON.stringify(window.state));
 
             document.getElementById('new-profile-input').value = '';
             document.getElementById('new-profile-pin').value = '';
@@ -939,9 +986,9 @@
             }
         };
 
-        window.selectParentChild = function(name) {
+        window.selectParentChild = async function(name) {
             if (!window.isParentMode || !window.profileList.includes(name)) return;
-            window.loadProfileData(name);
+            await window.loadProfileData(name);
             window.renderParentChildSelector();
         };
         window.renderParentChildSelector = function() {
