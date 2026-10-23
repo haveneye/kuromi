@@ -648,7 +648,8 @@
             localStorage.setItem('sanrio_app_last_active_profile', name);
 
             document.getElementById('current-profile-name').innerText = name;
-            document.getElementById('user-greeting-name').innerText = name;
+            const greetingName = document.getElementById('user-greeting-name');
+            if (greetingName) greetingName.innerText = name;
             window.updateParentAccountUI();
             renderHeader();
             renderTasks();
