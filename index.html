@@ -131,12 +131,8 @@
                     <i class="fas fa-chevron-down text-[10px] text-purple-200"></i>
                 </button>
 
-                <!-- Parent Mode Toggle Badge -->
                 <div class="flex items-center space-x-1">
-                    <button id="parent-mode-btn" onclick="toggleParentMode()" class="bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded-full text-[10px] font-jua border border-white/30">
-                        <span>👨‍👩‍👧 부모님 모드: OFF</span>
-                    </button>
-                    <!-- Point Counter Badge -->
+                    <button id="parent-account-button" onclick="openParentAccountModal()" class="bg-white/20 hover:bg-white/30 text-white px-2 py-1 rounded-full text-[10px] font-jua border border-white/30">👨‍👩‍👧 부모 계정</button>
                     <div class="bg-white/95 text-purple-900 px-2.5 py-1 rounded-full font-jua text-xs flex items-center space-x-1 shadow border border-purple-200">
                         <span class="text-amber-400 text-sm">⭐</span>
                         <span id="user-points" class="text-sm text-purple-900 font-bold">0</span>
@@ -165,6 +161,10 @@
             
             <!-- TAB 1: TODAY'S TASKS -->
             <section id="tab-tasks" class="space-y-3">
+                <div id="parent-child-selector" class="hidden bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
+                    <div class="flex justify-between items-center mb-2"><h2 class="font-jua text-purple-900 text-xs">👨‍👩‍👧 아이별 할 일</h2><span class="text-[10px] text-gray-400">아이를 눌러 바꿔요</span></div>
+                    <div id="parent-child-list" class="grid grid-cols-2 gap-2"></div>
+                </div>
                 <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
                     <div>
                         <span id="today-date-text" class="font-jua text-purple-900 text-sm">날짜 로딩 중...</span>
@@ -195,7 +195,7 @@
                     <div class="flex justify-between items-center mb-2.5">
                         <h2 class="font-jua text-purple-900 text-xs flex items-center gap-1">
                             <i class="fas fa-calendar-alt text-purple-500"></i>
-                            <span>부모님 실시간 학습 리포트</span>
+                            <span>아이 둘 완료 미션 달력</span>
                         </h2>
                         <div class="flex items-center space-x-1">
                             <button onclick="changeMonth(-1)" class="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold hover:bg-purple-200">＜</button>
@@ -203,6 +203,7 @@
                             <button onclick="changeMonth(1)" class="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold hover:bg-purple-200">＞</button>
                         </div>
                     </div>
+                    <div id="calendar-child-legend" class="flex gap-3 mb-2 text-[9px] text-gray-500"></div>
 
                     <div class="grid grid-cols-7 text-center font-jua text-xs text-purple-400 mb-1.5">
                         <div class="text-red-400">일</div>
@@ -243,6 +244,23 @@
                 <span>부모님 달력</span>
             </button>
         </nav>
+    </div>
+
+    <div id="parent-account-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-purple-300 space-y-2.5">
+            <div class="flex justify-between items-center"><h3 class="font-jua text-purple-900 text-sm">👨‍👩‍👧 부모 계정</h3><button onclick="closeParentAccountModal()" class="text-gray-400">✕</button></div>
+            <div id="parent-account-status" class="hidden bg-purple-50 p-3 rounded-xl text-center"><p class="text-[11px] text-purple-900 font-jua">로그인 중인 부모 계정</p><p id="parent-account-email" class="text-xs text-gray-600 mt-1 break-all"></p><button onclick="logoutParentAccount()" class="mt-3 w-full py-2 bg-gray-100 text-gray-600 rounded-xl font-jua text-xs">로그아웃</button></div>
+            <div id="parent-account-form" class="space-y-2">
+                <p class="text-[10px] text-gray-500 text-center">이메일과 비밀번호로 로그인하거나 부모 계정을 만드세요.</p>
+                <input id="parent-account-name" type="text" autocomplete="name" placeholder="부모님 이름 (계정 만들 때)" class="w-full border-2 border-purple-100 rounded-xl p-2 text-xs">
+                <input id="parent-account-email-input" type="email" autocomplete="email" placeholder="이메일" class="w-full border-2 border-purple-100 rounded-xl p-2 text-xs">
+                <input id="parent-account-password" type="password" autocomplete="current-password" placeholder="비밀번호 (6자 이상)" class="w-full border-2 border-purple-100 rounded-xl p-2 text-xs">
+                <p id="parent-account-message" class="min-h-4 text-[10px] text-red-500 text-center"></p>
+                <button onclick="loginParentAccount()" class="w-full py-2 bg-purple-600 text-white rounded-xl font-jua text-xs">로그인</button>
+                <button onclick="createParentAccount()" class="w-full py-2 bg-pink-500 text-white rounded-xl font-jua text-xs">새 부모 계정 만들기</button>
+                <p class="text-[9px] leading-relaxed text-gray-400">Firebase Authentication에서 이메일/비밀번호 로그인을 켜야 해요.</p>
+            </div>
+        </div>
     </div>
 
     <!-- Modals -->
@@ -333,7 +351,7 @@
     <!-- MAIN SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         let db = null;
@@ -413,8 +431,16 @@
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    await signInAnonymously(auth);
+                    await new Promise(resolve => {
+                        let unsubscribe = null;
+                        unsubscribe = onAuthStateChanged(auth, user => {
+                            if (unsubscribe) unsubscribe();
+                            resolve(user);
+                        });
+                    });
+                    if (!auth.currentUser) await signInAnonymously(auth);
                 }
+                window.isParentMode = Boolean(auth.currentUser && !auth.currentUser.isAnonymous);
 
                 document.getElementById('sync-status-dot').className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
                 document.getElementById('sync-status-text').innerText = "온라인 클라우드 실시간 연결됨";
@@ -501,6 +527,7 @@
 
         window.saveProfilesIndex = async function() {
             localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
+            if (typeof window.renderParentChildSelector === 'function') window.renderParentChildSelector();
 
             if (db && auth && auth.currentUser) {
                 try {
@@ -616,6 +643,7 @@
 
             document.getElementById('current-profile-name').innerText = name;
             document.getElementById('user-greeting-name').innerText = name;
+            window.updateParentAccountUI();
             renderHeader();
             renderTasks();
             renderShop();
@@ -636,7 +664,8 @@
                     }`;
                     btn.onclick = () => {
                         window.closeProfileModal();
-                        window.promptPinLogin(name);
+                        if (window.isParentMode) window.loadProfileData(name);
+                        else window.promptPinLogin(name);
                     };
                     btn.innerHTML = `<span>👤 ${escapeHtml(name)}</span><span class="text-[10px] px-2 py-0.5 rounded-full">로그인</span>`;
                     listContainer.appendChild(btn);
@@ -719,12 +748,125 @@
             window.closePinLoginModal();
         };
 
-        window.toggleParentMode = function() {
-            window.isParentMode = !window.isParentMode;
-            const btn = document.getElementById('parent-mode-btn');
-            btn.className = window.isParentMode ? "bg-pink-500 text-white px-2 py-0.5 rounded-full text-[10px] font-jua shadow animate-pulse" : "bg-white/20 text-white px-2 py-0.5 rounded-full text-[10px] font-jua";
-            btn.innerText = window.isParentMode ? "👨‍👩‍👧 부모님 모드: ON" : "👨‍👩‍👧 부모님 모드: OFF";
-            renderTasks();
+        window.updateParentAccountUI = function() {
+            window.isParentMode = Boolean(auth && auth.currentUser && !auth.currentUser.isAnonymous);
+            const button = document.getElementById('parent-account-button');
+            if (button) button.textContent = window.isParentMode ? '👑 부모 계정' : '👨‍👩‍👧 부모 계정';
+            const status = document.getElementById('parent-account-status');
+            const form = document.getElementById('parent-account-form');
+            const email = document.getElementById('parent-account-email');
+            if (status) status.classList.toggle('hidden', !window.isParentMode);
+            if (form) form.classList.toggle('hidden', window.isParentMode);
+            if (email && window.isParentMode) email.textContent = (auth.currentUser.displayName || '부모님') + ' · ' + (auth.currentUser.email || '');
+            if (typeof window.renderParentChildSelector === 'function') window.renderParentChildSelector();
+        };
+        window.openParentAccountModal = function() {
+            window.updateParentAccountUI();
+            const message = document.getElementById('parent-account-message');
+            if (message) message.textContent = '';
+            document.getElementById('parent-account-modal').classList.remove('hidden');
+        };
+        window.closeParentAccountModal = function() {
+            document.getElementById('parent-account-modal').classList.add('hidden');
+        };
+        function showParentAuthError(error) {
+            const message = error && error.code === 'auth/operation-not-allowed'
+                ? 'Firebase에서 이메일/비밀번호 로그인을 먼저 켜주세요.'
+                : error && error.code === 'auth/email-already-in-use' ? '이미 가입된 이메일이에요. 로그인해주세요.'
+                : error && error.code === 'auth/weak-password' ? '비밀번호는 6자 이상으로 입력해주세요.'
+                : error && error.code === 'auth/invalid-credential' ? '이메일 또는 비밀번호를 확인해주세요.'
+                : '계정 처리에 실패했어요. 연결 상태를 확인해주세요.';
+            const target = document.getElementById('parent-account-message');
+            if (target) target.textContent = message;
+            else showToast(message);
+        }
+        async function finishParentLogin(user) {
+            window.isParentMode = Boolean(user && !user.isAnonymous);
+            window.updateParentAccountUI();
+            window.closeParentAccountModal();
+            await window.loadProfiles();
+            if (window.profileList.length) {
+                const preferred = window.currentProfileName && window.profileList.includes(window.currentProfileName)
+                    ? window.currentProfileName : window.profileList[0];
+                window.loadProfileData(preferred);
+            } else {
+                window.openProfileModal();
+            }
+            showToast('부모 계정으로 로그인했어요.');
+        }
+        window.createParentAccount = async function() {
+            const name = document.getElementById('parent-account-name').value.trim();
+            const email = document.getElementById('parent-account-email-input').value.trim();
+            const password = document.getElementById('parent-account-password').value;
+            const message = document.getElementById('parent-account-message');
+            if (!name) { message.textContent = '부모님 이름을 입력해주세요.'; return; }
+            if (!email || password.length < 6) { message.textContent = '이메일과 6자 이상 비밀번호를 입력해주세요.'; return; }
+            if (!auth) { message.textContent = 'Firebase 연결을 확인해주세요.'; return; }
+            try {
+                const credential = await createUserWithEmailAndPassword(auth, email, password);
+                try { await updateProfile(credential.user, {displayName:name}); } catch (e) {}
+                await finishParentLogin(credential.user);
+            } catch (error) { showParentAuthError(error); }
+        };
+        window.loginParentAccount = async function() {
+            const email = document.getElementById('parent-account-email-input').value.trim();
+            const password = document.getElementById('parent-account-password').value;
+            const message = document.getElementById('parent-account-message');
+            if (!email || !password) { message.textContent = '이메일과 비밀번호를 입력해주세요.'; return; }
+            if (!auth) { message.textContent = 'Firebase 연결을 확인해주세요.'; return; }
+            try {
+                const credential = await signInWithEmailAndPassword(auth, email, password);
+                await finishParentLogin(credential.user);
+            } catch (error) { showParentAuthError(error); }
+        };
+        window.logoutParentAccount = async function() {
+            if (!auth) return;
+            try {
+                await signOut(auth);
+                await signInAnonymously(auth);
+                window.isParentMode = false;
+                window.updateParentAccountUI();
+                window.closeParentAccountModal();
+                if (window.currentProfileName) window.loadProfileData(window.currentProfileName);
+                showToast('부모 계정에서 로그아웃했어요.');
+            } catch (error) { showParentAuthError(error); }
+        };
+        window.selectParentChild = function(name) {
+            if (!window.isParentMode || !window.profileList.includes(name)) return;
+            window.loadProfileData(name);
+            window.renderParentChildSelector();
+        };
+        window.renderParentChildSelector = function() {
+            const section = document.getElementById('parent-child-selector');
+            const list = document.getElementById('parent-child-list');
+            if (!section || !list) return;
+            section.classList.toggle('hidden', !window.isParentMode);
+            if (!window.isParentMode) return;
+            list.replaceChildren();
+            window.profileList.forEach(name => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.dataset.profile = name;
+                button.className = 'p-2 rounded-xl border text-left transition ' + (name === window.currentProfileName ? 'border-purple-500 bg-purple-50 text-purple-900' : 'border-purple-100 bg-white text-gray-600');
+                const title = document.createElement('span');
+                title.className = 'block text-xs font-jua';
+                title.textContent = '👧 ' + name;
+                const saved = localStorage.getItem('sanrio_app_profile_' + name);
+                let points = 0;
+                try { if (saved) points = JSON.parse(saved).points || 0; } catch (e) {}
+                const detail = document.createElement('span');
+                detail.className = 'block mt-1 text-[9px] text-gray-400';
+                detail.textContent = '눌러서 할 일 보기';
+                button.append(title, detail);
+                list.appendChild(button);
+            });
+            if (!list.dataset.bound) {
+                list.addEventListener('click', event => {
+                    const button = event.target.closest('[data-profile]');
+                    if (button) window.selectParentChild(button.dataset.profile);
+                });
+                list.dataset.bound = 'true';
+            }
         };
 
         function renderHeader() {
@@ -880,17 +1022,45 @@
             if (tabName === 'calendar') window.renderCalendar();
         };
 
-        // 📅 달력 렌더링 및 완료 점, 상세 내역 복구
-        window.renderCalendar = function() {
+        // Parent calendar shows completed missions from both child profiles.
+        window.parentProfileHistories = {};
+        window.renderCalendar = async function() {
+            const histories = {};
+            if (window.isParentMode) {
+                await Promise.all(window.profileList.map(async name => {
+                    let data = {};
+                    try {
+                        const saved = localStorage.getItem('sanrio_app_profile_' + name);
+                        if (saved) data = JSON.parse(saved);
+                        if (db && auth && auth.currentUser) {
+                            const snapshot = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', name));
+                            if (snapshot.exists()) data = snapshot.data();
+                        }
+                    } catch (error) { console.error('아이 미션 기록 조회 실패:', error); }
+                    histories[name] = data.history || {};
+                }));
+            } else if (window.currentProfileName) {
+                histories[window.currentProfileName] = window.state.history || {};
+            }
+            window.parentProfileHistories = histories;
+
+            const legend = document.getElementById('calendar-child-legend');
+            if (legend) {
+                legend.replaceChildren();
+                Object.keys(histories).forEach((name, index) => {
+                    const item = document.createElement('span');
+                    item.className = 'font-jua ' + (index === 0 ? 'text-purple-600' : 'text-pink-500');
+                    item.textContent = '● ' + name;
+                    legend.appendChild(item);
+                });
+            }
+
             const date = window.state.viewMonth;
             const year = date.getFullYear();
             const month = date.getMonth();
-
-            document.getElementById('calendar-month-title').innerText = `${year}.${String(month + 1).padStart(2, '0')}`;
-
+            document.getElementById('calendar-month-title').innerText = year + '.' + String(month + 1).padStart(2, '0');
             const firstDay = new Date(year, month, 1).getDay();
             const lastDate = new Date(year, month + 1, 0).getDate();
-
             const container = document.getElementById('calendar-days');
             container.innerHTML = '';
 
@@ -900,30 +1070,24 @@
                 container.appendChild(blank);
             }
 
-            for (let d = 1; d <= lastDate; d++) {
-                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const dayLog = window.state.history[dateKey];
-
-                const dayBtn = document.createElement('button');
-                dayBtn.onclick = () => window.selectCalendarDate(dateKey);
-
-                let hasCompleted = false;
-                if (dayLog && dayLog.tasks) {
-                    const count = dayLog.tasks.filter(t => t.completed).length;
-                    if (count > 0) hasCompleted = true;
-                }
-
+            for (let day = 1; day <= lastDate; day++) {
+                const dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+                const completedChildren = Object.entries(histories).filter(([, history]) =>
+                    history[dateKey] && Array.isArray(history[dateKey].tasks) && history[dateKey].tasks.some(task => task.completed)
+                );
+                const dayButton = document.createElement('button');
+                dayButton.type = 'button';
+                dayButton.onclick = () => window.selectCalendarDate(dateKey);
                 const isToday = dateKey === getTodayKey();
-
-                dayBtn.className = `h-8 rounded-xl flex flex-col items-center justify-center relative transition-all ${
-                    isToday ? 'border-2 border-purple-500 font-bold bg-purple-50' : 'hover:bg-purple-50'
-                }`;
-
-                dayBtn.innerHTML = `
-                    <span class="text-[11px] ${isToday ? 'text-purple-700 font-bold' : 'text-gray-700'}">${d}</span>
-                    ${hasCompleted ? `<span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>` : '<span class="w-1.5 h-1.5 opacity-0"></span>'}
-                `;
-                container.appendChild(dayBtn);
+                dayButton.className = 'h-8 rounded-xl flex flex-col items-center justify-center relative transition-all ' +
+                    (isToday ? 'border-2 border-purple-500 font-bold bg-purple-50' : 'hover:bg-purple-50');
+                const dots = completedChildren.map((entry, index) =>
+                    '<i class="w-1.5 h-1.5 rounded-full ' + (index === 0 ? 'bg-purple-500' : 'bg-pink-400') +
+                    '" title="' + escapeHtml(entry[0]) + '"></i>'
+                ).join('');
+                dayButton.innerHTML = '<span class="text-[11px] ' + (isToday ? 'text-purple-700 font-bold' : 'text-gray-700') +
+                    '">' + day + '</span><span class="flex gap-0.5">' + dots + '</span>';
+                container.appendChild(dayButton);
             }
         };
 
@@ -932,32 +1096,67 @@
             const datePoints = document.getElementById('selected-date-points');
             const taskList = document.getElementById('selected-date-tasks');
 
-            const dayLog = window.state.history[dateKey];
-            dateTitle.innerText = `${dateKey} [${window.currentProfileName}] 기록`;
-
-            if (!dayLog || !dayLog.tasks || dayLog.tasks.length === 0) {
-                datePoints.innerText = '기록 없음';
-                taskList.innerHTML = `<li class="text-center py-3 text-gray-400 font-jua">해당 날짜의 학습 내역이 없습니다.</li>`;
+            if (window.isParentMode) {
+                const completed = [];
+                Object.entries(window.parentProfileHistories).forEach(([name, history]) => {
+                    const tasks = history[dateKey] && Array.isArray(history[dateKey].tasks) ? history[dateKey].tasks : [];
+                    tasks.filter(task => task.completed).forEach(task => completed.push({name, task}));
+                });
+                dateTitle.innerText = dateKey + ' 완료 미션';
+                const points = completed.reduce((sum, row) => sum + (row.task.points || 10), 0);
+                datePoints.innerText = '완료 ' + completed.length + '개 · +' + points + 'P';
+                taskList.replaceChildren();
+                if (!completed.length) {
+                    taskList.innerHTML = '<li class="text-center py-3 text-gray-400 font-jua">완료한 미션이 없어요.</li>';
+                    return;
+                }
+                completed.forEach((row, index) => {
+                    const item = document.createElement('li');
+                    item.className = 'flex items-center justify-between p-2 rounded-lg ' +
+                        (index % 2 === 0 ? 'bg-purple-50 text-purple-900' : 'bg-pink-50 text-pink-900');
+                    const child = document.createElement('span');
+                    child.className = 'text-[10px] font-jua mr-2 shrink-0';
+                    child.textContent = row.name;
+                    const title = document.createElement('span');
+                    title.className = 'flex-1 text-xs';
+                    title.textContent = row.task.title;
+                    const reward = document.createElement('span');
+                    reward.className = 'text-[9px] font-jua ml-2 shrink-0';
+                    reward.textContent = '+' + (row.task.points || 10) + 'P';
+                    item.append(child, title, reward);
+                    taskList.appendChild(item);
+                });
                 return;
             }
 
-            const completedTasks = dayLog.tasks.filter(t => t.completed);
-            const earnedP = completedTasks.reduce((sum, t) => sum + (t.points || 10), 0);
-            datePoints.innerText = `완료 ${completedTasks.length}/${dayLog.tasks.length}개 (+${earnedP}P)`;
+            const dayLog = window.state.history[dateKey];
+            dateTitle.innerText = dateKey + ' [' + window.currentProfileName + '] 기록';
 
-            taskList.innerHTML = '';
-            dayLog.tasks.forEach(t => {
-                const taskPts = t.points || 10;
-                const li = document.createElement('li');
-                li.className = `flex items-center justify-between p-2 rounded-lg ${t.completed ? 'bg-purple-50 text-purple-900' : 'bg-gray-50 text-gray-400'}`;
-                li.innerHTML = `
-                    <div class="flex items-center space-x-1.5">
-                        <span class="${t.completed ? '' : 'line-through'}">${escapeHtml(t.title)}</span>
-                        <span class="text-[9px] font-jua px-1.5 py-0.2 bg-purple-200/60 rounded text-purple-800">+${taskPts}P</span>
-                    </div>
-                    <span class="font-jua text-[10px] ${t.completed ? 'text-purple-600' : 'text-gray-400'}">${t.completed ? '완료 ✨' : '미완료'}</span>
-                `;
-                taskList.appendChild(li);
+            if (!dayLog || !dayLog.tasks || dayLog.tasks.length === 0) {
+                datePoints.innerText = '기록 없음';
+                taskList.innerHTML = '<li class="text-center py-3 text-gray-400 font-jua">해당 날짜의 학습 내역이 없습니다.</li>';
+                return;
+            }
+
+            const completedTasks = dayLog.tasks.filter(task => task.completed);
+            const earnedPoints = completedTasks.reduce((sum, task) => sum + (task.points || 10), 0);
+            datePoints.innerText = '완료 ' + completedTasks.length + '/' + dayLog.tasks.length + '개 (+' + earnedPoints + 'P)';
+            taskList.replaceChildren();
+            dayLog.tasks.forEach(task => {
+                const item = document.createElement('li');
+                item.className = 'flex items-center justify-between p-2 rounded-lg ' +
+                    (task.completed ? 'bg-purple-50 text-purple-900' : 'bg-gray-50 text-gray-400');
+                const label = document.createElement('span');
+                label.className = task.completed ? '' : 'line-through';
+                label.textContent = task.title;
+                const reward = document.createElement('span');
+                reward.className = 'text-[9px] font-jua px-1.5 py-0.2 bg-purple-200/60 rounded text-purple-800';
+                reward.textContent = '+' + (task.points || 10) + 'P';
+                const status = document.createElement('span');
+                status.className = 'font-jua text-[10px] ml-2 ' + (task.completed ? 'text-purple-600' : 'text-gray-400');
+                status.textContent = task.completed ? '완료 ✨' : '미완료';
+                item.append(label, reward, status);
+                taskList.appendChild(item);
             });
         };
 
@@ -981,6 +1180,7 @@
         window.onload = async function() {
             await initFirebase();
             await window.loadProfiles();
+            window.updateParentAccountUI();
             const lastActive = localStorage.getItem('sanrio_app_last_active_profile');
             if (lastActive && window.profileList.includes(lastActive)) {
                 window.loadProfileData(lastActive);
@@ -1006,7 +1206,7 @@
         function getParentSenderName() {
             const savedName = localStorage.getItem('sanrio_app_parent_display_name');
             const firebaseName = auth && auth.currentUser && auth.currentUser.displayName;
-            return savedName || firebaseName || "부모님";
+            return firebaseName || savedName || "부모님";
         }
         window.openChat = function() {
             const recipientRow = document.getElementById('chat-recipient-row');
