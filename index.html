@@ -728,7 +728,12 @@
                 window.state.unlockedCharacters = profileData.unlockedCharacters || ['kuromi'];
                 if (profileData.characterUnlockResetV1 !== true) {
                     const newlyAddedCharacterIds = ['pikachu', 'squirtle', 'snorlax', 'charmander', 'eevee'];
+                    const returnedUnlockPoints = CHARACTERS
+                        .filter(character => newlyAddedCharacterIds.includes(character.id) && window.state.unlockedCharacters.includes(character.id))
+                        .reduce((total, character) => total + character.cost, 0);
+                    window.state.points += returnedUnlockPoints;
                     window.state.unlockedCharacters = window.state.unlockedCharacters.filter(id => !newlyAddedCharacterIds.includes(id));
+                    if (newlyAddedCharacterIds.includes(window.state.activeCharacter)) window.state.activeCharacter = 'kuromi';
                     characterUnlockMigrationNeeded = true;
                 }
                 window.state.history = profileData.history || {};
