@@ -1610,10 +1610,18 @@
             localStorage.setItem(key, JSON.stringify(migratedIds));
             return new Set(migratedIds);
         }
-        function getChildUnreadMessages(profileName, messages) {
+        function getChildUnreadMessages(profileName, messages, cloudReadThrough = '') {
             const seenIds = getParentSeenMessageIds(profileName, messages);
-            const legacyLastSeen = Date.parse(localStorage.getItem(parentLastSeenKey(profileName)) || '') || 0;
-            return messages.filter(message => message.sender === 'child' && (message.id ? !seenIds.has(message.id) : (Date.parse(message.time || '') || 0) > legacyLastSeen));
+            const readThrough = Math.max(
+                Date.parse(cloudReadThrough || '') || 0,
+                Date.parse(localStorage.getItem(parentLastSeenKey(profileName)) || '') || 0
+            );
+            return messages.filter(message => {
+                if (message.sender !== 'child') return false;
+                if (message.id && seenIds.has(message.id)) return false;
+                const messageTime = Date.parse(message.time || '') || 0;
+                return message.id ? (!messageTime || messageTime > readThrough) : messageTime > readThrough;
+            });
         }
         function childSeenParentIdsKey(profileName) {
             return 'sanrio_app_child_parent_messages_seen_' + encodeURIComponent(profileName);
@@ -1629,12 +1637,29 @@
             messages.filter(message => message.sender === 'parent' && message.id).forEach(message => seenIds.add(message.id));
             localStorage.setItem(childSeenParentIdsKey(profileName), JSON.stringify(Array.from(seenIds)));
         }
-        function markChildMessagesSeen(profileName, messages) {
+        function markChildMessagesSeen(profileName, messages, cloudReadThrough = '') {
             const seenIds = getParentSeenMessageIds(profileName, messages);
             messages.filter(message => message.sender === 'child' && message.id).forEach(message => seenIds.add(message.id));
             localStorage.setItem(parentSeenIdsKey(profileName), JSON.stringify(Array.from(seenIds)));
-            const latestChildTime = messages.filter(message => message.sender === 'child').map(message => Date.parse(message.time || '') || 0).reduce((max, value) => Math.max(max, value), 0);
-            if (latestChildTime) localStorage.setItem(parentLastSeenKey(profileName), new Date(latestChildTime).toISOString());
+            const latestChildTime = messages
+                .filter(message => message.sender === 'child')
+                .map(message => Date.parse(message.time || '') || 0)
+                .reduce((max, value) => Math.max(max, value), 0);
+            const previousReadThrough = Math.max(
+                Date.parse(cloudReadThrough || '') || 0,
+                Date.parse(localStorage.getItem(parentLastSeenKey(profileName)) || '') || 0
+            );
+            if (latestChildTime) {
+                localStorage.setItem(parentLastSeenKey(profileName), new Date(Math.max(latestChildTime, previousReadThrough)).toISOString());
+            }
+            if (latestChildTime > (Date.parse(cloudReadThrough || '') || 0) && db && auth && auth.currentUser) {
+                const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profileName);
+                setDoc(profileRef, {
+                    parentMessagesReadThrough: new Date(latestChildTime).toISOString()
+                }, { merge: true }).catch(error => {
+                    console.error('부모 메시지 읽음 상태 저장 실패:', error);
+                });
+            }
         }
         function updateParentMessageBadge() {
             const button = document.querySelector('.chat-open-btn');
@@ -1724,11 +1749,13 @@
                 window.parentMessageUnsubs[profileName] = onSnapshot(profileRef, snapshot => {
                     window.parentMessageWatchReady = true;
                     delete window.parentMessageWatchErrors[profileName];
-                    const messages = snapshot.exists() ? (snapshot.data().chatMessages || []) : [];
+                    const profileData = snapshot.exists() ? snapshot.data() : {};
+                    const messages = profileData.chatMessages || [];
+                    const cloudReadThrough = profileData.parentMessagesReadThrough || '';
                     const currentIds = new Set(messages.map(message => message.id).filter(Boolean));
                     const chatIsOpenForProfile = window.isParentMode && document.getElementById('chatModal').style.display === 'flex' && getChatProfile() === profileName;
-                    if (chatIsOpenForProfile) markChildMessagesSeen(profileName, messages);
-                    const unreadMessages = getChildUnreadMessages(profileName, messages);
+                    if (chatIsOpenForProfile) markChildMessagesSeen(profileName, messages, cloudReadThrough);
+                    const unreadMessages = getChildUnreadMessages(profileName, messages, cloudReadThrough);
                     const newChildMessages = previousIds === null
                         ? unreadMessages
                         : messages.filter(message => message.sender === 'child' && message.id && !previousIds.has(message.id));
@@ -1800,9 +1827,10 @@
             try {
                 const msgRef = doc(db, "artifacts", appId, "public", "data", "profiles", activeProfile);
                 unsubscribeMessages = onSnapshot(msgRef, (docSnap) => {
-                    const messages = docSnap.exists() ? (docSnap.data().chatMessages || []) : [];
+                    const profileData = docSnap.exists() ? docSnap.data() : {};
+                    const messages = profileData.chatMessages || [];
                     if (window.isParentMode) {
-                        markChildMessagesSeen(activeProfile, messages);
+                        markChildMessagesSeen(activeProfile, messages, profileData.parentMessagesReadThrough || '');
                         window.parentUnreadCounts[activeProfile] = 0;
                         updateParentMessageBadge();
                     } else {
