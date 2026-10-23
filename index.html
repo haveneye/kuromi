@@ -433,7 +433,12 @@
             { id: 'mymelody', name: '마이멜로디', cost: 100, speech: '"차근차근 해내다니 정말 대견해! 🌸"' },
             { id: 'cinnamoroll', name: '시나모롤', cost: 150, speech: '"구름 위를 날아오르는 것처럼 잘하고 있어! ☁️"' },
             { id: 'pompompurin', name: '폼폼푸린', cost: 200, speech: '"매일 조금씩 달콤하게 발전하는 중! 🍮"' },
-            { id: 'pochacco', name: '포차코', cost: 250, speech: '"신나게 같이 공부하자! 파이팅! 🐶"' }
+            { id: 'pochacco', name: '포차코', cost: 250, speech: '"신나게 같이 공부하자! 파이팅! 🐶"' },
+            { id: 'pikachu', name: '피카츄', cost: 300, speech: '"피카피카! 오늘도 번쩍 힘내자! ⚡"' },
+            { id: 'squirtle', name: '꼬부기', cost: 350, speech: '"물방울처럼 한 걸음씩 해보자! 💧"' },
+            { id: 'snorlax', name: '잠만보', cost: 400, speech: '"천천히 해도 괜찮아. 꾸준함이 최고야! 💤"' },
+            { id: 'charmander', name: '파이리', cost: 450, speech: '"작은 불꽃처럼 오늘의 목표를 해내자! 🔥"' },
+            { id: 'eevee', name: '이브이', cost: 500, speech: '"너만의 멋진 모습으로 자라나고 있어! ✨"' }
         ];
 
         const DEFAULT_TASKS = [
@@ -996,12 +1001,7 @@
                     await saveParentPinSettings(parents);
                 }
                 window.isParentMode = true;
-                window.parentDisplayName = parentRoleNames[role];,
-            { id: 'pikachu', name: '피카츄', cost: 300, speech: '"피카피카! 오늘도 번쩍 힘내자! ⚡"' },
-            { id: 'squirtle', name: '꼬부기', cost: 350, speech: '"물방울처럼 한 걸음씩 해보자! 💧"' },
-            { id: 'snorlax', name: '잠만보', cost: 400, speech: '"천천히 해도 괜찮아. 꾸준함이 최고야! 💤"' },
-            { id: 'charmander', name: '파이리', cost: 450, speech: '"작은 불꽃처럼 오늘의 목표를 해내자! 🔥"' },
-            { id: 'eevee', name: '이브이', cost: 500, speech: '"너만의 멋진 모습으로 자라나고 있어! ✨"' }
+                window.parentDisplayName = parentRoleNames[role];
                 localStorage.setItem('sanrio_app_last_parent_role', role);
                 window.closeParentAccountModal();
                 window.closeProfileModal();
