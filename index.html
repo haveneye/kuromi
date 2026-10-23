@@ -176,17 +176,6 @@
                     </button>
                 </div>
 
-                <!-- Progress Bar -->
-                <div class="bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
-                    <div class="flex justify-between text-xs font-jua mb-1 text-purple-800">
-                        <span><span id="user-greeting-name" class="text-pink-500 font-bold">친구</span>의 목표 달성률</span>
-                        <span id="progress-percent" class="text-pink-500 font-bold">0%</span>
-                    </div>
-                    <div class="w-full bg-purple-100 rounded-full h-3 overflow-hidden p-0.5">
-                        <div id="progress-bar" class="bg-gradient-to-r from-pink-400 to-purple-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                </div>
-
                 <!-- Task Items Container -->
                 <div class="space-y-2" id="task-list"></div>
             </section>
@@ -753,14 +742,12 @@
         function renderTasks() {
             const listEl = document.getElementById('task-list');
             listEl.innerHTML = '';
-            let completedCount = 0;
 
             if (window.state.tasks.length === 0) {
                 listEl.innerHTML = `<div class="bg-white p-6 rounded-2xl text-center text-gray-400 font-jua"><p>등록된 목표가 없어요!</p></div>`;
             }
 
             window.state.tasks.forEach(task => {
-                if (task.completed) completedCount++;
                 const taskDiv = document.createElement('div');
                 taskDiv.className = `p-3 rounded-2xl bg-white shadow-sm border flex items-center justify-between ${task.completed ? 'border-purple-200 bg-purple-50/50' : 'border-purple-100'}`;
                 taskDiv.innerHTML = `
@@ -775,10 +762,6 @@
                 `;
                 listEl.appendChild(taskDiv);
             });
-
-            const percent = window.state.tasks.length > 0 ? Math.round((completedCount / window.state.tasks.length) * 100) : 0;
-            document.getElementById('progress-percent').innerText = `${percent}%`;
-            document.getElementById('progress-bar').style.width = `${percent}%`;
         }
 
         function renderShop() {
@@ -1011,9 +994,47 @@
         // 채팅 시스템 관련
         let unsubscribeMessages = null;
         function getActiveProfile() {
-            return window.currentProfileName || localStorage.getItem('sanrio_app_last_active_profile') || "기본아이";
+            return window.currentProfileName || localStorage.getItem('sanrio_app_last_active_profile') || "";
+        }
+        function getChatProfile() {
+            if (window.isParentMode) {
+                const selector = document.getElementById('chat-recipient');
+                return selector ? selector.value : "";
+            }
+            return getActiveProfile();
+        }
+        function getParentSenderName() {
+            const savedName = localStorage.getItem('sanrio_app_parent_display_name');
+            const firebaseName = auth && auth.currentUser && auth.currentUser.displayName;
+            return savedName || firebaseName || "부모님";
         }
         window.openChat = function() {
+            const recipientRow = document.getElementById('chat-recipient-row');
+            const selector = document.getElementById('chat-recipient');
+            const senderLabel = document.getElementById('chat-sender-label');
+            if (window.isParentMode) {
+                recipientRow.style.display = 'block';
+                selector.replaceChildren();
+                const children = Array.isArray(window.profileList) ? window.profileList : [];
+                if (children.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = "등록된 아이 프로필이 없습니다";
+                    selector.appendChild(option);
+                } else {
+                    children.forEach(name => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        selector.appendChild(option);
+                    });
+                    if (children.includes(getActiveProfile())) selector.value = getActiveProfile();
+                }
+                senderLabel.innerText = "보내는 사람: 👑 " + getParentSenderName();
+                selector.onchange = window.listenMessages;
+            } else {
+                recipientRow.style.display = 'none';
+            }
             document.getElementById('chatModal').style.display = 'flex';
             window.listenMessages();
         };
@@ -1022,14 +1043,22 @@
             if (unsubscribeMessages) { unsubscribeMessages(); unsubscribeMessages = null; }
         };
         window.listenMessages = function() {
-            const activeProfile = getActiveProfile();
-            if (!db || !activeProfile) return;
-            if (unsubscribeMessages) unsubscribeMessages();
+            const activeProfile = getChatProfile();
+            const container = document.getElementById('chatMessages');
+            if (unsubscribeMessages) { unsubscribeMessages(); unsubscribeMessages = null; }
+            container.innerHTML = '';
+            if (!activeProfile) {
+                container.innerHTML = '<div style="text-align:center; color:#888; font-size:13px;">메시지를 보낼 아이 프로필이 없습니다.</div>';
+                return;
+            }
+            if (!db || !auth || !auth.currentUser) {
+                container.innerHTML = '<div style="text-align:center; color:#888; font-size:13px;">실시간 메시지는 온라인 연결 후 사용할 수 있어요.</div>';
+                return;
+            }
             try {
                 const msgRef = doc(db, "artifacts", appId, "public", "data", "profiles", activeProfile);
                 unsubscribeMessages = onSnapshot(msgRef, (docSnap) => {
                     const messages = docSnap.exists() ? (docSnap.data().chatMessages || []) : [];
-                    const container = document.getElementById('chatMessages');
                     container.innerHTML = messages.length === 0 ? '<div style="text-align:center; color:#888; font-size:13px;">첫 메시지를 남겨보세요! 💌</div>' : '';
                     messages.forEach(msg => {
                         const div = document.createElement('div');
@@ -1045,23 +1074,29 @@
                         container.appendChild(div);
                     });
                     container.scrollTop = container.scrollHeight;
+                }, (error) => {
+                    console.error('메시지 불러오기 실패:', error);
+                    container.innerHTML = '<div style="text-align:center; color:#b91c1c; font-size:13px;">메시지를 불러오지 못했어요. Firebase 연결과 권한을 확인해주세요.</div>';
                 });
-            } catch(e) {}
+            } catch(e) {
+                console.error('메시지 구독 실패:', e);
+            }
         };
         window.sendChatMessage = async function() {
             const input = document.getElementById('chatInput');
             const text = input ? input.value.trim() : '';
             if (!text) return;
-            const activeProfile = getActiveProfile();
+            const activeProfile = getChatProfile();
+            if (!activeProfile) { alert("메시지를 보낼 아이 프로필을 먼저 등록해주세요."); return; }
             if (!db || !auth || !auth.currentUser) { alert("실시간 메시지는 온라인 연결 후 사용할 수 있어요."); return; }
             try {
-                const isParent = confirm("부모님으로 보내시겠습니까?\n[확인]: 부모님 / [취소]: 아이");
+                const isParent = Boolean(window.isParentMode);
                 const docRef = doc(db, "artifacts", appId, "public", "data", "profiles", activeProfile);
                 const docSnap = await getDoc(docRef);
                 const currentMsgs = docSnap.exists() ? (docSnap.data().chatMessages || []) : [];
                 currentMsgs.push({
                     sender: isParent ? 'parent' : 'child',
-                    senderName: isParent ? '👑 부모님' : '👧 아이',
+                    senderName: isParent ? "👑 " + getParentSenderName() : '👧 아이',
                     text: text,
                     time: new Date().toISOString()
                 });
@@ -1070,7 +1105,7 @@
                 window.listenMessages();
             } catch (err) { alert("전송 실패: " + err.message); }
         };
-    </script>
+            </script>
 
     <!-- 우측 하단 쿠로미 메시지 버튼 -->
     <div class="chat-btn-container">
@@ -1083,6 +1118,13 @@
             <div style="background: #a855f7; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 15px;">
                 <span>💌 쿠로미 대화함</span>
                 <button onclick="closeChat()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+            </div>
+            <div id="chat-recipient-row" style="display:none; padding:8px 12px; background:white; border-bottom:1px solid #eee;">
+                <label for="chat-recipient" style="display:flex; align-items:center; gap:8px; font-size:12px; color:#6b21a8; font-weight:bold;">
+                    받는 아이
+                    <select id="chat-recipient" style="flex:1; min-width:0; padding:7px 9px; border:1px solid #ddd; border-radius:9px; background:white; font-size:13px;"></select>
+                </label>
+                <div id="chat-sender-label" style="margin-top:5px; font-size:11px; color:#777;"></div>
             </div>
             <div id="chatMessages" style="flex: 1; padding: 15px; overflow-y: auto; background: #f9f5ff; display: flex; flex-direction: column; gap: 8px;"></div>
             <div style="padding: 10px 12px; background: white; border-top: 1px solid #eee;">
