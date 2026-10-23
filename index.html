@@ -1544,9 +1544,31 @@
         function parentLastSeenKey(profileName) {
             return 'sanrio_app_parent_messages_seen_' + encodeURIComponent(profileName);
         }
+        function parentSeenIdsKey(profileName) {
+            return 'sanrio_app_parent_messages_seen_ids_' + encodeURIComponent(profileName);
+        }
+        function getParentSeenMessageIds(profileName, messages) {
+            const key = parentSeenIdsKey(profileName);
+            const savedIds = localStorage.getItem(key);
+            if (savedIds !== null) {
+                try { return new Set(JSON.parse(savedIds) || []); } catch (error) { return new Set(); }
+            }
+            const legacyLastSeen = Date.parse(localStorage.getItem(parentLastSeenKey(profileName)) || '') || 0;
+            const migratedIds = messages.filter(message => message.sender === 'child' && message.id && legacyLastSeen && (Date.parse(message.time || '') || 0) <= legacyLastSeen).map(message => message.id);
+            localStorage.setItem(key, JSON.stringify(migratedIds));
+            return new Set(migratedIds);
+        }
         function getChildUnreadMessages(profileName, messages) {
-            const lastSeen = Date.parse(localStorage.getItem(parentLastSeenKey(profileName)) || '1970-01-01T00:00:00.000Z') || 0;
-            return messages.filter(message => message.sender === 'child' && (Date.parse(message.time || '') || 0) > lastSeen);
+            const seenIds = getParentSeenMessageIds(profileName, messages);
+            const legacyLastSeen = Date.parse(localStorage.getItem(parentLastSeenKey(profileName)) || '') || 0;
+            return messages.filter(message => message.sender === 'child' && (message.id ? !seenIds.has(message.id) : (Date.parse(message.time || '') || 0) > legacyLastSeen));
+        }
+        function markChildMessagesSeen(profileName, messages) {
+            const seenIds = getParentSeenMessageIds(profileName, messages);
+            messages.filter(message => message.sender === 'child' && message.id).forEach(message => seenIds.add(message.id));
+            localStorage.setItem(parentSeenIdsKey(profileName), JSON.stringify(Array.from(seenIds)));
+            const latestChildTime = messages.filter(message => message.sender === 'child').map(message => Date.parse(message.time || '') || 0).reduce((max, value) => Math.max(max, value), 0);
+            if (latestChildTime) localStorage.setItem(parentLastSeenKey(profileName), new Date(latestChildTime).toISOString());
         }
         function updateParentMessageBadge() {
             const button = document.querySelector('.chat-open-btn');
@@ -1594,14 +1616,14 @@
                 window.parentMessageUnsubs[profileName] = onSnapshot(profileRef, snapshot => {
                     const messages = snapshot.exists() ? (snapshot.data().chatMessages || []) : [];
                     const currentIds = new Set(messages.map(message => message.id).filter(Boolean));
-                    const newChildMessages = previousIds === null ? [] : messages.filter(message => message.sender === 'child' && message.id && !previousIds.has(message.id));
-                    previousIds = currentIds;
                     const chatIsOpenForProfile = window.isParentMode && document.getElementById('chatModal').style.display === 'flex' && getChatProfile() === profileName;
-                    if (chatIsOpenForProfile) {
-                        const latestChildTime = messages.filter(message => message.sender === 'child').map(message => Date.parse(message.time || '') || 0).reduce((max, value) => Math.max(max, value), 0);
-                        if (latestChildTime) localStorage.setItem(parentLastSeenKey(profileName), new Date(latestChildTime).toISOString());
-                    }
-                    window.parentUnreadCounts[profileName] = getChildUnreadMessages(profileName, messages).length;
+                    if (chatIsOpenForProfile) markChildMessagesSeen(profileName, messages);
+                    const unreadMessages = getChildUnreadMessages(profileName, messages);
+                    const newChildMessages = previousIds === null
+                        ? unreadMessages
+                        : messages.filter(message => message.sender === 'child' && message.id && !previousIds.has(message.id));
+                    previousIds = currentIds;
+                    window.parentUnreadCounts[profileName] = unreadMessages.length;
                     updateParentMessageBadge();
                     if (newChildMessages.length && !chatIsOpenForProfile) showToast('💌 ' + profileName + '에게 새 메시지 ' + newChildMessages.length + '개가 왔어요.');
                 }, error => console.error(profileName + ' 메시지 알림 구독 실패:', error));
@@ -1665,8 +1687,7 @@
                 unsubscribeMessages = onSnapshot(msgRef, (docSnap) => {
                     const messages = docSnap.exists() ? (docSnap.data().chatMessages || []) : [];
                     if (window.isParentMode) {
-                        const latestChildTime = messages.filter(msg => msg.sender === 'child').map(msg => Date.parse(msg.time || '') || 0).reduce((max, value) => Math.max(max, value), 0);
-                        if (latestChildTime) localStorage.setItem(parentLastSeenKey(activeProfile), new Date(latestChildTime).toISOString());
+                        markChildMessagesSeen(activeProfile, messages);
                         window.parentUnreadCounts[activeProfile] = 0;
                         updateParentMessageBadge();
                     }
