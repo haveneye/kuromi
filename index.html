@@ -506,7 +506,7 @@
                     window.state.history = data.history || window.state.history;
 
                     const todayKey = getTodayKey();
-                    if (!window.state.history[todayKey] || !window.state.history[todayKey].tasks || window.state.history[todayKey].tasks.length === 0) {
+                    if (!window.state.history[todayKey] || !Array.isArray(window.state.history[todayKey].tasks)) {
                         window.state.history[todayKey] = {
                             tasks: DEFAULT_TASKS.map((item, idx) => ({
                                 id: 'task_' + Date.now() + '_' + idx,
@@ -666,7 +666,7 @@
             }
 
             const todayKey = getTodayKey();
-            if (!window.state.history[todayKey] || !window.state.history[todayKey].tasks || window.state.history[todayKey].tasks.length === 0) {
+            if (!window.state.history[todayKey] || !Array.isArray(window.state.history[todayKey].tasks)) {
                 window.state.history[todayKey] = {
                     tasks: DEFAULT_TASKS.map((item, idx) => ({
                         id: 'task_' + Date.now() + '_' + idx,
