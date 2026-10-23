@@ -162,7 +162,13 @@
             <!-- TAB 1: TODAY'S TASKS -->
             <section id="tab-tasks" class="space-y-3">
                 <div id="parent-child-selector" class="hidden bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
-                    <div class="flex justify-between items-center mb-2"><h2 class="font-jua text-purple-900 text-xs">👨‍👩‍👧 아이별 할 일</h2><span class="text-[10px] text-gray-400">아이를 눌러 바꿔요</span></div>
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="font-jua text-purple-900 text-xs">👨‍👩‍👧 아이별 할 일</h2>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-gray-400">아이를 눌러 바꿔요</span>
+                            <button onclick="openPointsAdjustModal()" class="bg-yellow-100 text-amber-700 border border-yellow-200 px-2 py-1 rounded-lg text-[10px] font-jua">⭐ 포인트 조절</button>
+                        </div>
+                    </div>
                     <div id="parent-child-list" class="grid grid-cols-2 gap-2"></div>
                 </div>
                 <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
@@ -344,6 +350,25 @@
 
     <div id="toast-message" class="fixed top-6 left-1/2 -translate-x-1/2 bg-purple-900/90 text-white px-3.5 py-1.5 rounded-full text-xs font-jua shadow-lg z-50 pointer-events-none opacity-0 transition-opacity duration-300 border border-purple-300/50">
         <span id="toast-text">알림 메시지</span>
+    </div>
+
+    <div id="parent-point-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden animate-pop" style="z-index:70">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-5 border-4 border-yellow-300 shadow-2xl">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-jua text-purple-900 text-sm">⭐ 아이 포인트 조절</h3>
+                <button onclick="closePointsAdjustModal()" class="text-gray-400">✕</button>
+            </div>
+            <p id="parent-point-target" class="text-center text-xs font-jua text-purple-700"></p>
+            <p id="parent-point-current" class="text-center text-[11px] text-gray-500 mt-1 mb-3"></p>
+            <label class="block text-[10px] text-purple-800 font-jua mb-1">조절할 포인트
+                <input id="parent-point-amount" type="number" min="1" max="10000" value="10" inputmode="numeric" class="mt-1 w-full border-2 border-purple-100 rounded-xl p-2 text-center text-lg font-jua">
+            </label>
+            <div class="flex gap-2 mt-3">
+                <button onclick="adjustChildPoints(-1)" class="flex-1 py-2 bg-pink-100 text-pink-700 rounded-xl font-jua text-xs">− 포인트 차감</button>
+                <button onclick="adjustChildPoints(1)" class="flex-1 py-2 bg-purple-600 text-white rounded-xl font-jua text-xs">＋ 포인트 지급</button>
+            </div>
+            <button onclick="closePointsAdjustModal()" class="w-full py-2 mt-2 text-gray-400 font-jua text-[10px]">닫기</button>
+        </div>
     </div>
 
     <div id="character-unlock-modal" class="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center p-4 hidden animate-pop" style="z-index:10001">
@@ -946,7 +971,8 @@
                 try { if (saved) points = JSON.parse(saved).points || 0; } catch (e) {}
                 const detail = document.createElement('span');
                 detail.className = 'block mt-1 text-[9px] text-gray-400';
-                detail.textContent = '눌러서 할 일 보기';
+                if (name === window.currentProfileName) points = window.state.points || 0;
+                detail.textContent = '⭐ ' + points + 'P · 눌러서 할 일 보기';
                 button.append(title, detail);
                 list.appendChild(button);
             });
@@ -1107,6 +1133,39 @@
             if (pointsInput) pointsInput.value = String(Math.max(1, Math.min(100, parseInt(points, 10) || 10)));
             window.updatePointDisplay(pointsInput ? pointsInput.value : points);
         };
+        window.openPointsAdjustModal = function() {
+            if (!window.isParentMode) { showToast('부모님 메뉴를 먼저 열어주세요.'); return; }
+            if (!window.currentProfileName) { showToast('포인트를 조절할 아이를 먼저 선택해주세요.'); return; }
+            document.getElementById('parent-point-target').textContent = '대상: ' + window.currentProfileName;
+            document.getElementById('parent-point-current').textContent = '현재 포인트: ' + (window.state.points || 0) + 'P';
+            document.getElementById('parent-point-amount').value = '10';
+            document.getElementById('parent-point-modal').classList.remove('hidden');
+        };
+        window.closePointsAdjustModal = function() {
+            document.getElementById('parent-point-modal').classList.add('hidden');
+        };
+        window.adjustChildPoints = async function(direction) {
+            if (!window.isParentMode || !window.currentProfileName) return;
+            const input = document.getElementById('parent-point-amount');
+            const amount = Number.parseInt(input.value, 10);
+            if (!Number.isInteger(amount) || amount < 1 || amount > 10000) {
+                showToast('1부터 10,000까지 입력해주세요.');
+                return;
+            }
+            const before = window.state.points || 0;
+            const after = direction > 0 ? before + amount : Math.max(0, before - amount);
+            const changed = Math.abs(after - before);
+            if (!changed) { showToast('차감할 포인트가 없어요.'); return; }
+            window.state.points = after;
+            await syncToOnlineCloud();
+            renderHeader();
+            renderTasks();
+            renderShop();
+            window.renderParentChildSelector();
+            window.closePointsAdjustModal();
+            showToast(window.currentProfileName + '에게 ' + (direction > 0 ? '+' : '−') + changed + 'P 조정했어요.');
+        };
+
         window.openAddTaskModal = function() { document.getElementById('add-task-modal').classList.remove('hidden'); };
         window.closeAddTaskModal = function() { document.getElementById('add-task-modal').classList.add('hidden'); };
         window.openCloudConfigModal = function() { document.getElementById('cloud-config-modal').classList.remove('hidden'); };
