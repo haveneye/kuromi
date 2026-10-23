@@ -170,6 +170,7 @@
                         </div>
                     </div>
                     <div id="parent-message-notice" class="hidden mb-2 p-2 rounded-xl bg-pink-50 border border-pink-200"></div>
+                    <p id="parent-message-watch-status" class="hidden text-[9px] text-purple-500 mt-1"></p>
                     <div id="parent-child-list" class="grid grid-cols-2 gap-2"></div>
                 </div>
                 <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
@@ -445,6 +446,8 @@
         window.parentPinSettings = null;
         window.parentMessageUnsubs = {};
         window.parentUnreadCounts = {};
+        window.parentMessageWatchErrors = {};
+        window.parentMessageWatchReady = false;
 
         window.state = {
             pin: '0000',
@@ -1577,6 +1580,25 @@
             button.innerHTML = total
                 ? '✉️ 쿠로미 메시지함 <span style="background:#fff;color:#7e22ce;border-radius:999px;padding:1px 6px;font-size:11px;">' + total + '</span>'
                 : '✉️ 쿠로미 메시지함';
+            const status = document.getElementById('parent-message-watch-status');
+            if (status) {
+                if (!window.isParentMode) {
+                    status.classList.add('hidden');
+                } else {
+                    status.classList.remove('hidden');
+                    const errorProfiles = Object.keys(window.parentMessageWatchErrors);
+                    if (!db || !auth || !auth.currentUser) {
+                        status.className = 'block text-[9px] text-red-600 mt-1';
+                        status.textContent = '⚠️ Firebase 연결이 없어 새 메시지를 확인할 수 없어요.';
+                    } else if (errorProfiles.length) {
+                        status.className = 'block text-[9px] text-red-600 mt-1';
+                        status.textContent = '⚠️ 메시지 확인 연결 실패: ' + errorProfiles.join(', ') + ' · 페이지를 새로고침해 주세요.';
+                    } else {
+                        status.className = 'block text-[9px] text-purple-500 mt-1';
+                        status.textContent = window.parentMessageWatchReady ? '💌 아이들 메시지를 확인하고 있어요.' : '💌 메시지 확인 연결 중…';
+                    }
+                }
+            }
             const notice = document.getElementById('parent-message-notice');
             if (notice) {
                 notice.replaceChildren();
@@ -1605,15 +1627,22 @@
             Object.values(window.parentMessageUnsubs).forEach(unsubscribe => unsubscribe());
             window.parentMessageUnsubs = {};
             window.parentUnreadCounts = {};
+            window.parentMessageWatchErrors = {};
+            window.parentMessageWatchReady = false;
             updateParentMessageBadge();
         };
         window.startParentMessageNotifications = function() {
             window.stopParentMessageNotifications();
+            window.parentMessageWatchErrors = {};
+            window.parentMessageWatchReady = false;
+            updateParentMessageBadge();
             if (!window.isParentMode || !db || !auth || !auth.currentUser) return;
             window.profileList.forEach(profileName => {
                 let previousIds = null;
                 const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profileName);
                 window.parentMessageUnsubs[profileName] = onSnapshot(profileRef, snapshot => {
+                    window.parentMessageWatchReady = true;
+                    delete window.parentMessageWatchErrors[profileName];
                     const messages = snapshot.exists() ? (snapshot.data().chatMessages || []) : [];
                     const currentIds = new Set(messages.map(message => message.id).filter(Boolean));
                     const chatIsOpenForProfile = window.isParentMode && document.getElementById('chatModal').style.display === 'flex' && getChatProfile() === profileName;
@@ -1626,7 +1655,12 @@
                     window.parentUnreadCounts[profileName] = unreadMessages.length;
                     updateParentMessageBadge();
                     if (newChildMessages.length && !chatIsOpenForProfile) showToast('💌 ' + profileName + '에게 새 메시지 ' + newChildMessages.length + '개가 왔어요.');
-                }, error => console.error(profileName + ' 메시지 알림 구독 실패:', error));
+                }, error => {
+                    window.parentMessageWatchErrors[profileName] = error.code || error.message || 'unknown';
+                    updateParentMessageBadge();
+                    showToast(profileName + ' 메시지 알림 연결 실패');
+                    console.error(profileName + ' 메시지 알림 구독 실패:', error);
+                });
             });
         };
         window.openChat = function(profileName) {
