@@ -736,6 +736,15 @@
                     if (newlyAddedCharacterIds.includes(window.state.activeCharacter)) window.state.activeCharacter = 'kuromi';
                     characterUnlockMigrationNeeded = true;
                 }
+                if (profileData.characterUnlockResetV2 !== true) {
+                    const paidUnlockedCharacters = CHARACTERS.filter(character =>
+                        character.cost > 0 && window.state.unlockedCharacters.includes(character.id)
+                    );
+                    window.state.points += paidUnlockedCharacters.reduce((total, character) => total + character.cost, 0);
+                    window.state.unlockedCharacters = ['kuromi'];
+                    window.state.activeCharacter = 'kuromi';
+                    characterUnlockMigrationNeeded = true;
+                }
                 window.state.history = profileData.history || {};
             } else {
                 window.state.pin = '0000';
@@ -745,6 +754,7 @@
                 window.state.history = {};
             }
             window.state.characterUnlockResetV1 = true;
+            window.state.characterUnlockResetV2 = true;
 
             const todayKey = getTodayKey();
             let seededDefaultTasks = false;
