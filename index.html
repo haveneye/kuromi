@@ -551,23 +551,48 @@
             const name = window.targetLoginProfile;
             if (!name) { showToast("⚠️ 먼저 로그인할 아이를 선택해주세요!"); return; }
             if (!/^\d{4}$/.test(enteredPin)) { showToast("🔒 비밀번호 4자리를 입력해주세요!"); return; }
-            let saved = localStorage.getItem(`sanrio_app_profile_${name}`);
+
+            let correctPin = null;
             if (db && auth && auth.currentUser) {
                 try {
-                    const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', name));
-                    if (snap.exists()) {
-                        saved = JSON.stringify(snap.data());
-                        localStorage.setItem(`sanrio_app_profile_${name}`, saved);
+                    const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', name);
+                    const snap = await getDoc(profileRef);
+                    if (!snap.exists()) {
+                        showToast("⚠️ Firebase에서 이 아이 프로필을 찾을 수 없어요. 앱의 Firebase 경로를 확인해주세요.");
+                        return;
                     }
-                } catch (e) { console.warn('PIN 클라우드 확인 실패, 저장된 기기 정보로 확인합니다.', e); }
+                    const cloudData = snap.data();
+                    if (cloudData.pin == null || String(cloudData.pin).trim() === '') {
+                        showToast("⚠️ Firebase 프로필에 PIN이 저장되어 있지 않아요.");
+                        return;
+                    }
+                    correctPin = String(cloudData.pin).trim();
+                    localStorage.setItem(`sanrio_app_profile_${name}`, JSON.stringify(cloudData));
+                } catch (e) {
+                    console.error('Firebase PIN 조회 실패:', e);
+                    showToast("⚠️ Firebase에서 PIN을 확인하지 못했어요. 연결·권한을 확인해주세요.");
+                    return;
+                }
+            } else {
+                const saved = localStorage.getItem(`sanrio_app_profile_${name}`);
+                if (saved) {
+                    try {
+                        const localData = JSON.parse(saved);
+                        if (localData.pin != null) correctPin = String(localData.pin).trim();
+                    } catch (e) {}
+                }
+                if (correctPin == null) {
+                    showToast("⚠️ Firebase 연결이 없고 이 기기에 저장된 PIN도 없어요.");
+                    return;
+                }
             }
-            let correctPin = null;
-            if (saved) { try { correctPin = JSON.parse(saved).pin; } catch(e) {} }
-            if (correctPin == null) { showToast("⚠️ 저장된 비밀번호를 찾을 수 없어요. 부모님께 확인해주세요."); return; }
-            if (enteredPin === String(correctPin)) {
+
+            if (enteredPin === correctPin) {
                 window.closePinLoginModal();
                 window.loadProfileData(name);
-            } else { showToast("❌ 비밀번호가 틀렸습니다!"); }
+            } else {
+                showToast("❌ Firebase에 저장된 PIN과 일치하지 않아요.");
+            }
         };
 
         window.loadProfileData = function(name) {
@@ -669,13 +694,37 @@
             document.getElementById('parent-reset-modal').classList.remove('hidden');
         };
         window.closeParentResetModal = function() { document.getElementById('parent-reset-modal').classList.add('hidden'); };
-        window.executePinReset = function() {
+        window.executePinReset = async function() {
             const ans = parseInt(document.getElementById('math-quiz-answer').value.trim(), 10);
             const newPin = document.getElementById('reset-new-pin').value.trim();
+            const targetName = window.targetLoginProfile || window.currentProfileName;
             if (ans !== window.currentQuizAnswer) { showToast("❌ 정답이 틀렸습니다!"); return; }
             if (!/^\d{4}$/.test(newPin)) { showToast("🔒 새 PIN은 숫자 4자리여야 합니다!"); return; }
-            window.state.pin = newPin;
-            syncToOnlineCloud();
+            if (!targetName) { showToast("⚠️ 비밀번호를 바꿀 아이 프로필을 찾을 수 없어요."); return; }
+
+            const storageKey = `sanrio_app_profile_${targetName}`;
+            let profileData = {};
+            const saved = localStorage.getItem(storageKey);
+            if (saved) {
+                try { profileData = JSON.parse(saved); } catch (e) {}
+            }
+            profileData.pin = newPin;
+
+            if (db && auth && auth.currentUser) {
+                try {
+                    await setDoc(
+                        doc(db, 'artifacts', appId, 'public', 'data', 'profiles', targetName),
+                        { pin: newPin, updatedAt: new Date().toISOString() },
+                        { merge: true }
+                    );
+                } catch (e) {
+                    console.error('Firebase PIN 저장 실패:', e);
+                    showToast("⚠️ Firebase에 새 PIN을 저장하지 못했어요. 연결·권한을 확인해주세요.");
+                    return;
+                }
+            }
+            localStorage.setItem(storageKey, JSON.stringify(profileData));
+            if (targetName === window.currentProfileName) window.state.pin = newPin;
             showToast("✅ 비밀번호가 재설정되었습니다!");
             window.closeParentResetModal();
             window.closePinLoginModal();
