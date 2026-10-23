@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>쿠로미와 산리오 친구들의 공부 습관 💜 (실시간 연동)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts (Jua & Gowun Dodum) -->
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        kuromi: {
+                            purple: '#A855F7',
+                            darkPurple: '#4C1D95',
+                            lightPurple: '#F3E8FF',
+                            black: '#2D2235',
+                            pink: '#F472B6',
+                            softPink: '#FCE7F3',
+                            mint: '#A7F3D0',
+                            yellow: '#FEF08A'
+                        }
+                    },
+                    fontFamily: {
+                        jua: ['Jua', 'sans-serif'],
+                        dodum: ['Gowun Dodum', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Gowun Dodum', sans-serif;
+            background-color: #f3e8ff;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-jua { font-family: 'Jua', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 10px; }
+        
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-bounce-slow { animation: bounce-slow 2.5s infinite ease-in-out; }
+
+        @keyframes popIn {
+            0% { transform: scale(0.85); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop { animation: popIn 0.25s ease-out forwards; }
+
+        .chat-btn-container {
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            z-index: 9999 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .chat-open-btn {
+            background: linear-gradient(135deg, #a855f7, #7e22ce) !important;
+            color: white !important;
+            border: 2px solid #ffffff !important;
+            padding: 8px 14px !important;
+            border-radius: 20px !important;
+            font-weight: bold !important;
+            font-size: 13px !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            white-space: nowrap !important;
+        }
+
+        @media screen and (max-width: 600px) {
+            .chat-btn-container {
+                bottom: 80px !important;
+                right: 15px !important;
+            }
+            .chat-open-btn {
+                padding: 10px 14px !important;
+                font-size: 12px !important;
+                border-radius: 25px !important;
+                box-shadow: 0 4px 10px rgba(168, 85, 247, 0.4) !important;
+            }
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen sm:py-4">
+
+    <!-- 에러 발생 시 화면에 표시되는 영역 -->
+    <div id="error-screen" class="hidden fixed inset-0 bg-red-100 text-red-800 p-6 z-50 flex flex-col items-center justify-center text-center">
+        <h2 class="text-lg font-bold mb-2">⚠️ 앱 실행 중 오류가 발생했습니다</h2>
+        <p id="error-message" class="text-xs font-mono bg-white p-3 rounded border border-red-300 max-w-sm overflow-auto"></p>
+    </div>
+
+    <!-- Mobile Screen Frame Container -->
+    <div id="app" class="w-full max-w-md h-[100vh] sm:h-[844px] bg-white sm:rounded-[36px] shadow-2xl overflow-hidden flex flex-col relative border-4 border-purple-200">
+        
+        <!-- Top Online Sync Status Banner -->
+        <div id="online-sync-bar" class="bg-purple-900 text-white px-3 py-1 text-[10px] flex justify-between items-center font-jua">
+            <div class="flex items-center space-x-1.5">
+                <span id="sync-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="sync-status-text" class="text-purple-200">온라인 동기화 대기 중</span>
+            </div>
+            <button onclick="openCloudConfigModal()" class="text-pink-300 hover:text-white underline">
+                ☁️ 부모님 온라인 연동 설정
+            </button>
+        </div>
+
+        <!-- Header Banner with Character Speech & Profile Switcher -->
+        <header class="bg-gradient-to-r from-purple-500 via-pink-400 to-purple-600 text-white p-3.5 rounded-b-[24px] shadow-lg z-10 relative">
+            <div class="flex justify-between items-center mb-2">
+                <!-- User Profile Selector Badge -->
+                <button onclick="openProfileModal()" class="flex items-center space-x-1.5 bg-black/20 hover:bg-black/30 text-white px-2.5 py-1 rounded-full border border-white/30 text-xs transition active:scale-95">
+                    <i class="fas fa-lock text-pink-200 text-xs"></i>
+                    <span id="current-profile-name" class="font-jua text-sm text-yellow-200">이름 없음</span>
+                    <i class="fas fa-chevron-down text-[10px] text-purple-200"></i>
+                </button>
+
+                <!-- Parent Mode Toggle Badge -->
+                <div class="flex items-center space-x-1">
+                    <button id="parent-mode-btn" onclick="toggleParentMode()" class="bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded-full text-[10px] font-jua border border-white/30">
+                        <span>👨‍👩‍👧 부모님 모드: OFF</span>
+                    </button>
+                    <!-- Point Counter Badge -->
+                    <div class="bg-white/95 text-purple-900 px-2.5 py-1 rounded-full font-jua text-xs flex items-center space-x-1 shadow border border-purple-200">
+                        <span class="text-amber-400 text-sm">⭐</span>
+                        <span id="user-points" class="text-sm text-purple-900 font-bold">0</span>
+                        <span class="text-[10px] text-purple-500">P</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Avatar Card with Interactive Speech -->
+            <div class="flex items-center bg-white/25 backdrop-blur-md rounded-2xl p-2 border border-white/40 shadow-inner">
+                <div id="active-avatar-container" class="w-14 h-14 bg-white rounded-2xl p-1 shadow flex-shrink-0 animate-bounce-slow flex items-center justify-center border-2 border-purple-200">
+                    <!-- Dynamic SVG Character -->
+                </div>
+                <div class="ml-2.5 flex-1 overflow-hidden">
+                    <div class="flex items-center space-x-1.5">
+                        <span id="active-char-name" class="font-jua text-[10px] bg-purple-900/80 px-2 py-0.5 rounded-md text-white">쿠로미</span>
+                        <span class="text-[10px] text-purple-100 font-medium">응원 한마디</span>
+                    </div>
+                    <p id="character-speech" class="text-xs text-white mt-1 font-jua leading-relaxed truncate">"오늘도 대단해! 쿠로미가 응원할게! 🖤"</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dynamic Body Area -->
+        <main class="flex-1 overflow-y-auto p-3.5 bg-purple-50/60 relative" id="main-content">
+            
+            <!-- TAB 1: TODAY'S TASKS -->
+            <section id="tab-tasks" class="space-y-3">
+                <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
+                    <div>
+                        <span id="today-date-text" class="font-jua text-purple-900 text-sm">날짜 로딩 중...</span>
+                        <p class="text-[10px] text-gray-400">실시간 연동으로 부모님과 함께 확인해요!</p>
+                    </div>
+                    <button onclick="openAddTaskModal()" class="bg-gradient-to-r from-pink-400 to-purple-500 text-white px-2.5 py-1.5 rounded-xl text-xs font-jua shadow hover:opacity-95 active:scale-95 transition flex items-center space-x-1">
+                        <i class="fas fa-plus"></i>
+                        <span>할 일 추가</span>
+                    </button>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
+                    <div class="flex justify-between text-xs font-jua mb-1 text-purple-800">
+                        <span><span id="user-greeting-name" class="text-pink-500 font-bold">친구</span>의 목표 달성률</span>
+                        <span id="progress-percent" class="text-pink-500 font-bold">0%</span>
+                    </div>
+                    <div class="w-full bg-purple-100 rounded-full h-3 overflow-hidden p-0.5">
+                        <div id="progress-bar" class="bg-gradient-to-r from-pink-400 to-purple-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Task Items Container -->
+                <div class="space-y-2" id="task-list"></div>
+            </section>
+
+            <!-- TAB 2: SANRIO CHARACTER SHOP -->
+            <section id="tab-shop" class="hidden space-y-3">
+                <div class="text-center bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
+                    <h2 class="font-jua text-purple-900 text-sm">🎀 산리오 친구들 수집소</h2>
+                    <p class="text-[11px] text-gray-500 mt-0.5">포인트를 모아 귀여운 캐릭터들을 해금해보세요!</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5" id="character-grid"></div>
+            </section>
+
+            <!-- TAB 3: PARENTS CALENDAR VIEW -->
+            <section id="tab-calendar" class="hidden space-y-3">
+                <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-purple-100">
+                    <div class="flex justify-between items-center mb-2.5">
+                        <h2 class="font-jua text-purple-900 text-xs flex items-center gap-1">
+                            <i class="fas fa-calendar-alt text-purple-500"></i>
+                            <span>부모님 실시간 학습 리포트</span>
+                        </h2>
+                        <div class="flex items-center space-x-1">
+                            <button onclick="changeMonth(-1)" class="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold hover:bg-purple-200">＜</button>
+                            <span id="calendar-month-title" class="font-jua text-xs px-1 text-purple-900">2026.10</span>
+                            <button onclick="changeMonth(1)" class="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold hover:bg-purple-200">＞</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-7 text-center font-jua text-xs text-purple-400 mb-1.5">
+                        <div class="text-red-400">일</div>
+                        <div>월</div>
+                        <div>화</div>
+                        <div>수</div>
+                        <div>목</div>
+                        <div>금</div>
+                        <div class="text-blue-400">토</div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-xs" id="calendar-days"></div>
+                </div>
+
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-purple-100 space-y-2">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <span id="selected-date-title" class="font-jua text-purple-900 text-xs">날짜를 클릭하세요</span>
+                        <span id="selected-date-points" class="text-[10px] bg-purple-100 text-purple-700 font-jua px-2 py-0.5 rounded-full">0P 완료</span>
+                    </div>
+                    <ul id="selected-date-tasks" class="space-y-1.5 text-xs text-gray-600 max-h-36 overflow-y-auto">
+                        <li class="text-center py-3 text-gray-400 font-jua">달력 날짜를 선택하면 실시간 기록이 나타납니다.</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bg-white border-t border-purple-100 flex justify-around p-2 text-center text-xs z-10">
+            <button onclick="switchTab('tasks')" id="nav-tasks" class="flex-1 py-1 flex flex-col items-center text-purple-600 font-jua transition">
+                <i class="fas fa-check-circle text-base mb-0.5"></i>
+                <span>오늘의 할일</span>
+            </button>
+            <button onclick="switchTab('shop')" id="nav-shop" class="flex-1 py-1 flex flex-col items-center text-gray-400 hover:text-purple-600 font-jua transition">
+                <i class="fas fa-heart text-base mb-0.5"></i>
+                <span>캐릭터 수집</span>
+            </button>
+            <button onclick="switchTab('calendar')" id="nav-calendar" class="flex-1 py-1 flex flex-col items-center text-gray-400 hover:text-purple-600 font-jua transition">
+                <i class="fas fa-calendar-check text-base mb-0.5"></i>
+                <span>부모님 달력</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Modals -->
+    <div id="profile-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-purple-300 text-center">
+            <h3 class="font-jua text-purple-900 text-sm mb-1">🖤 프로필 선택 & 비밀번호</h3>
+            <div id="existing-profiles" class="space-y-1.5 mb-2.5 max-h-32 overflow-y-auto pr-0.5"></div>
+            <div class="pt-2 border-t border-purple-100 space-y-2">
+                <input type="text" id="new-profile-input" placeholder="이름 입력 (예: 지우)" class="w-full border-2 border-purple-200 rounded-xl p-2 text-xs text-center font-jua focus:outline-none">
+                <input type="password" id="new-profile-pin" maxlength="4" placeholder="🔒 비밀번호 4자리" class="w-full border-2 border-purple-200 rounded-xl p-2 text-xs text-center font-jua focus:outline-none">
+                <button onclick="createNewProfile()" class="w-full py-2 bg-gradient-to-r from-pink-400 to-purple-600 text-white font-jua text-xs rounded-xl shadow">✨ 새 프로필 등록</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pin-login-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-purple-400 text-center space-y-2.5">
+            <h3 class="font-jua text-purple-900 text-xs">🔒 [<span id="pin-target-name" class="text-pink-500"></span>] 접속 비밀번호</h3>
+            <input type="password" id="pin-input" maxlength="4" placeholder="••••" class="w-full border-2 border-purple-300 rounded-xl p-2 text-center text-lg tracking-widest font-bold focus:outline-none">
+            <div class="flex space-x-2 pt-1">
+                <button onclick="closePinLoginModal()" class="flex-1 py-1.5 bg-gray-100 text-gray-600 rounded-xl font-jua text-xs">취소</button>
+                <button onclick="verifyPinLogin()" class="flex-1 py-1.5 bg-purple-600 text-white rounded-xl font-jua text-xs shadow">확인</button>
+            </div>
+            <button onclick="openParentResetModal()" class="text-[10px] text-purple-500 underline font-jua pt-1 block mx-auto">🔑 비밀번호 재설정</button>
+        </div>
+    </div>
+
+    <div id="parent-reset-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-pink-300 text-center space-y-2.5">
+            <h3 class="font-jua text-purple-900 text-xs">👨‍👩‍👧 비밀번호 초기화 (부모님 퀴즈)</h3>
+            <div class="bg-purple-50 p-2 rounded-xl border border-purple-200">
+                <span id="math-quiz-question" class="font-jua text-purple-900 text-sm">18 × 7 = ?</span>
+            </div>
+            <input type="number" id="math-quiz-answer" placeholder="정답 입력" class="w-full border-2 border-purple-200 rounded-xl p-1.5 text-center font-jua text-xs">
+            <input type="password" id="reset-new-pin" maxlength="4" placeholder="새 비밀번호 4자리" class="w-full border-2 border-purple-200 rounded-xl p-1.5 text-center font-jua text-xs">
+            <div class="flex space-x-2">
+                <button onclick="closeParentResetModal()" class="flex-1 py-1.5 bg-gray-100 text-gray-600 rounded-xl font-jua text-xs">취소</button>
+                <button onclick="executePinReset()" class="flex-1 py-1.5 bg-pink-500 text-white rounded-xl font-jua text-xs shadow">재설정</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-task-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-2 border-purple-200">
+            <div class="flex justify-between items-center mb-2.5">
+                <h3 class="font-jua text-purple-900 text-xs">✨ 학습 목표 추가</h3>
+                <button onclick="closeAddTaskModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xs"></i></button>
+            </div>
+            
+            <p class="text-[11px] text-purple-500 font-jua mb-1">추천 항목:</p>
+            <div class="flex flex-wrap gap-1 mb-2.5">
+                <button onclick="applyPreset('📖 독서 20분 읽기', 10)" class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg">📖 독서(10P)</button>
+                <button onclick="applyPreset('✏️ 수학 문제집 2장', 15)" class="text-[10px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded-lg">✏️ 수학(15P)</button>
+                <button onclick="applyPreset('📚 영단어 10개 외우기', 10)" class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg">📚 영어(10P)</button>
+                <button onclick="applyPreset('🎹 예체능 연습하기', 20)" class="text-[10px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded-lg">🎹 예체능(20P)</button>
+            </div>
+
+            <input type="text" id="custom-task-input" placeholder="공부할 내용을 적어주세요!" class="w-full border-2 border-purple-100 rounded-xl p-2 text-xs mb-2.5 font-dodum">
+            <div class="bg-purple-50 p-2 rounded-xl border border-purple-100 mb-3">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[11px] font-jua text-purple-900">⭐ 보상 포인트:</span>
+                    <span id="point-preset-display" class="font-jua text-xs text-pink-500 font-bold">10 P</span>
+                </div>
+                <input type="number" id="custom-task-points" value="10" min="1" max="100" class="w-full border border-purple-200 rounded-lg p-1 text-center text-xs font-jua bg-white" oninput="updatePointDisplay(this.value)">
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="closeAddTaskModal()" class="flex-1 py-1.5 bg-gray-100 rounded-xl text-gray-600 font-jua text-xs">취소</button>
+                <button onclick="saveNewTask()" class="flex-1 py-1.5 bg-gradient-to-r from-pink-400 to-purple-500 text-white rounded-xl font-jua text-xs shadow">추가하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cloud-config-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border-4 border-purple-400 space-y-3 text-left">
+            <div class="text-center">
+                <span class="text-2xl">☁️</span>
+                <h3 class="font-jua text-purple-900 text-xs">부모님 온라인 동기화 안내</h3>
+                <p class="text-[10px] text-gray-500 mt-0.5">아이와 부모님 스마트폰에서 동일한 프로필 이름과 PIN으로 접속하면 실시간 연동됩니다.</p>
+            </div>
+            <button onclick="closeCloudConfigModal()" class="w-full py-2 bg-purple-600 text-white font-jua text-xs rounded-xl shadow">확인 완료</button>
+        </div>
+    </div>
+
+    <div id="toast-message" class="fixed top-6 left-1/2 -translate-x-1/2 bg-purple-900/90 text-white px-3.5 py-1.5 rounded-full text-xs font-jua shadow-lg z-50 pointer-events-none opacity-0 transition-opacity duration-300 border border-purple-300/50">
+        <span id="toast-text">알림 메시지</span>
+    </div>
+
+    <!-- MAIN SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        let db = null;
+        let auth = null;
+        let unsubscribeDoc = null;
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'kuromi-study-default';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBV_rnTIqxLquQAJ2i14S-Lin2y0bCIF3Q",
+            authDomain: "kuromi-app.firebaseapp.com",
+            projectId: "kuromi-app",
+            storageBucket: "kuromi-app.firebasestorage.app",
+            messagingSenderId: "713556925410",
+            appId: "1:713556925410:web:76ef2b7dcff8138ad637bb"
+        };
+
+        // 🎀 산리오 캐릭터 SVG 원본 복구
+        const SANRIO_SVGS = {
+            kuromi: `<svg viewBox="0 0 100 100" class="w-full h-full" role="img" aria-label="쿠로미"><defs><linearGradient id="khood" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#51415f"/><stop offset="1" stop-color="#17131f"/></linearGradient></defs><path d="M23 38 C8 20 6 5 17 5 C29 8 34 21 35 34 L65 34 C66 21 71 8 83 5 C94 5 92 20 77 38 C88 49 87 70 77 82 Q64 94 50 92 Q36 94 23 82 C13 70 12 49 23 38Z" fill="url(#khood)" stroke="#211a2b" stroke-width="2"/><path d="M16 12 Q23 14 28 32 L20 35 Q13 25 16 12Z M84 12 Q77 14 72 32 L80 35 Q87 25 84 12Z" fill="#2b2335"/><ellipse cx="50" cy="61" rx="27" ry="23" fill="#fffafc"/><ellipse cx="39" cy="57" rx="3.5" ry="5.5" fill="#30263b"/><ellipse cx="61" cy="57" rx="3.5" ry="5.5" fill="#30263b"/><ellipse cx="30" cy="64" rx="5" ry="3" fill="#ff9cc9" opacity=".8"/><ellipse cx="70" cy="64" rx="5" ry="3" fill="#ff9cc9" opacity=".8"/><path d="M46 65 Q50 69 54 65" fill="none" stroke="#30263b" stroke-width="2" stroke-linecap="round"/><circle cx="50" cy="30" r="10" fill="#ff80b7" stroke="#2b2335" stroke-width="2"/><path d="M45 28 L48 25 L50 28 L53 25 L56 28 L55 33 Q50 37 45 33Z" fill="#fff"/><path d="M37 40 Q50 34 63 40" fill="none" stroke="#ff80b7" stroke-width="2"/></svg>`,
+            mymelody: `<svg viewBox="0 0 100 100" class="w-full h-full" role="img" aria-label="마이멜로디"><path d="M24 38 C10 20 9 5 20 7 C31 9 35 24 35 38 L65 38 C65 24 69 9 80 7 C91 5 90 20 76 38 C86 48 86 70 76 82 Q64 92 50 91 Q36 92 24 82 C14 70 14 48 24 38Z" fill="#ff91c5" stroke="#f05d9e" stroke-width="2"/><path d="M19 13 Q26 16 29 35 L22 36 Q15 26 19 13Z M81 13 Q74 16 71 35 L78 36 Q85 26 81 13Z" fill="#ffb8d9"/><ellipse cx="50" cy="62" rx="26" ry="22" fill="#fffaf4"/><ellipse cx="39" cy="59" rx="3" ry="5" fill="#45313a"/><ellipse cx="61" cy="59" rx="3" ry="5" fill="#45313a"/><ellipse cx="30" cy="66" rx="5" ry="3" fill="#ff9ab8"/><ellipse cx="70" cy="66" rx="5" ry="3" fill="#ff9ab8"/><path d="M47 66 Q50 69 53 66" fill="none" stroke="#b86a7d" stroke-width="1.8" stroke-linecap="round"/><path d="M68 29 C61 20 69 12 76 19 C84 10 92 20 83 28 L76 34Z" fill="#ff5e9e" stroke="#e74486" stroke-width="1.5"/><circle cx="76" cy="25" r="3" fill="#ffd6e7"/></svg>`,
+            cinnamoroll: `<svg viewBox="0 0 100 100" class="w-full h-full" role="img" aria-label="시나모롤"><path d="M30 43 C16 31 2 26 4 46 C5 61 19 68 33 59Z" fill="#fff" stroke="#cbdcf7" stroke-width="2"/><path d="M70 43 C84 31 98 26 96 46 C95 61 81 68 67 59Z" fill="#fff" stroke="#cbdcf7" stroke-width="2"/><path d="M26 50 C22 34 34 25 50 25 C66 25 78 34 74 50 C81 66 67 82 50 82 C33 82 19 66 26 50Z" fill="#fff" stroke="#cbdcf7" stroke-width="2"/><ellipse cx="39" cy="52" rx="3.2" ry="5.3" fill="#4689e8"/><ellipse cx="61" cy="52" rx="3.2" ry="5.3" fill="#4689e8"/><ellipse cx="29" cy="62" rx="5" ry="3.3" fill="#ffb7d0" opacity=".8"/><ellipse cx="71" cy="62" rx="5" ry="3.3" fill="#ffb7d0" opacity=".8"/><path d="M46 62 Q50 66 54 62" fill="none" stroke="#6b8fbd" stroke-width="2" stroke-linecap="round"/><path d="M43 34 Q50 28 57 34" fill="none" stroke="#e4edff" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="72" r="2" fill="#dbeafe"/></svg>`,
+            pompompurin: `<svg viewBox="0 0 100 100" class="w-full h-full" role="img" aria-label="폼폼푸린"><path d="M17 57 C17 39 30 30 50 30 C70 30 83 39 83 57 C83 76 69 88 50 88 C31 88 17 76 17 57Z" fill="#ffdf76" stroke="#e9b84d" stroke-width="2"/><ellipse cx="27" cy="55" rx="8" ry="12" fill="#ffdf76"/><ellipse cx="73" cy="55" rx="8" ry="12" fill="#ffdf76"/><path d="M34 32 C34 18 66 18 66 32 Q50 39 34 32Z" fill="#8b572f" stroke="#704223" stroke-width="2"/><path d="M39 29 Q50 24 61 29" fill="none" stroke="#b9824b" stroke-width="2"/><ellipse cx="39" cy="56" rx="3" ry="4.5" fill="#6b452e"/><ellipse cx="61" cy="56" rx="3" ry="4.5" fill="#6b452e"/><ellipse cx="50" cy="62" rx="3.5" ry="2.5" fill="#8b572f"/><path d="M45 67 Q50 72 55 67" fill="none" stroke="#8b572f" stroke-width="2" stroke-linecap="round"/><ellipse cx="29" cy="65" rx="4.5" ry="2.7" fill="#ffad9e" opacity=".75"/><ellipse cx="71" cy="65" rx="4.5" ry="2.7" fill="#ffad9e" opacity=".75"/></svg>`,
+            pochacco: `<svg viewBox="0 0 100 100" class="w-full h-full" role="img" aria-label="포차코"><path d="M27 37 C12 17 7 26 12 48 C15 59 23 61 31 55Z" fill="#25232c"/><path d="M73 37 C88 17 93 26 88 48 C85 59 77 61 69 55Z" fill="#25232c"/><path d="M22 49 C22 32 34 24 50 24 C66 24 78 32 78 49 C83 66 68 83 50 83 C32 83 17 66 22 49Z" fill="#fff" stroke="#d8dce4" stroke-width="2"/><ellipse cx="39" cy="51" rx="3.2" ry="5" fill="#292832"/><ellipse cx="61" cy="51" rx="3.2" ry="5" fill="#292832"/><ellipse cx="29" cy="62" rx="4.5" ry="3" fill="#ffb5c9" opacity=".75"/><ellipse cx="71" cy="62" rx="4.5" ry="3" fill="#ffb5c9" opacity=".75"/><ellipse cx="50" cy="59" rx="3.5" ry="2.7" fill="#292832"/><path d="M46 65 Q50 69 54 65" fill="none" stroke="#292832" stroke-width="1.8" stroke-linecap="round"/><path d="M42 32 Q50 28 58 32" fill="none" stroke="#f0f0f5" stroke-width="3" stroke-linecap="round"/></svg>`
+        };
+
+        const CHARACTERS = [
+            { id: 'kuromi', name: '쿠로미', cost: 0, speech: '"오늘도 대단해! 쿠로미가 항상 응원할게! 🖤"' },
+            { id: 'mymelody', name: '마이멜로디', cost: 100, speech: '"차근차근 해내다니 정말 대견해! 🌸"' },
+            { id: 'cinnamoroll', name: '시나모롤', cost: 150, speech: '"구름 위를 날아오르는 것처럼 잘하고 있어! ☁️"' },
+            { id: 'pompompurin', name: '폼폼푸린', cost: 200, speech: '"매일 조금씩 달콤하게 발전하는 중! 🍮"' },
+            { id: 'pochacco', name: '포차코', cost: 250, speech: '"신나게 같이 공부하자! 파이팅! 🐶"' }
+        ];
+
+        const DEFAULT_TASKS = [
+            { title: '📖 동화책이나 공부책 20분 읽기', points: 10 },
+            { title: '✏️ 수학 문제집 2장 풀기', points: 15 },
+            { title: '📚 영어 단어 10개 외우기', points: 10 },
+            { title: '🎹 예체능/악기 연습하기', points: 20 }
+        ];
+
+        window.currentProfileName = '';
+        window.profileList = [];
+        window.targetLoginProfile = '';
+        window.currentQuizAnswer = 0;
+        window.isParentMode = false;
+
+        window.state = {
+            pin: '0000',
+            points: 0,
+            activeCharacter: 'kuromi',
+            unlockedCharacters: ['kuromi'],
+            tasks: [],
+            history: {},
+            viewMonth: new Date()
+        };
+
+        function getTodayKey() {
+            const today = new Date();
+            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        }
+
+        window.onerror = function(msg, url, line) {
+            const errScreen = document.getElementById('error-screen');
+            const errText = document.getElementById('error-message');
+            if (errScreen && errText) {
+                errScreen.classList.remove('hidden');
+                errText.innerText = `${msg}\n(Line: ${line})`;
+            }
+        };
+
+        async function initFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                document.getElementById('sync-status-dot').className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+                document.getElementById('sync-status-text').innerText = "온라인 클라우드 실시간 연결됨";
+            } catch(e) {
+                console.warn("Firebase fallback mode", e);
+                document.getElementById('sync-status-dot').className = "w-2 h-2 rounded-full bg-amber-400";
+                document.getElementById('sync-status-text').innerText = "로컬 보관함 전용 모드";
+            }
+        }
+
+        function subscribeOnlineDoc(profileName) {
+            if (!db || !auth || !auth.currentUser) return;
+            if (unsubscribeDoc) unsubscribeDoc();
+
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profileName);
+            unsubscribeDoc = onSnapshot(docRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    window.state.pin = data.pin || window.state.pin;
+                    window.state.points = data.points ?? window.state.points;
+                    window.state.activeCharacter = data.activeCharacter || window.state.activeCharacter;
+                    window.state.unlockedCharacters = data.unlockedCharacters || window.state.unlockedCharacters;
+                    window.state.history = data.history || window.state.history;
+
+                    const todayKey = getTodayKey();
+                    if (!window.state.history[todayKey] || !window.state.history[todayKey].tasks || window.state.history[todayKey].tasks.length === 0) {
+                        window.state.history[todayKey] = {
+                            tasks: DEFAULT_TASKS.map((item, idx) => ({
+                                id: 'task_' + Date.now() + '_' + idx,
+                                title: item.title,
+                                points: item.points || 10,
+                                completed: false
+                            }))
+                        };
+                    }
+                    window.state.tasks = window.state.history[todayKey].tasks;
+                    renderHeader();
+                    renderTasks();
+                    renderShop();
+                }
+            });
+        }
+
+        async function syncToOnlineCloud() {
+            if (!window.currentProfileName) return;
+            const todayKey = getTodayKey();
+            if (!window.state.history[todayKey]) window.state.history[todayKey] = {};
+            window.state.history[todayKey].tasks = window.state.tasks;
+            localStorage.setItem(`sanrio_app_profile_${window.currentProfileName}`, JSON.stringify(window.state));
+
+            if (db && auth && auth.currentUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', window.currentProfileName);
+                    await setDoc(docRef, { ...window.state, updatedAt: new Date().toISOString() }, { merge: true });
+                } catch(e) {
+                    console.error("Cloud push failed", e);
+                }
+            }
+        }
+
+        window.loadProfiles = async function() {
+            window.profileList = [];
+
+            if (db && auth && auth.currentUser) {
+                try {
+                    const listDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'profileList');
+                    const snap = await getDoc(listDocRef);
+                    if (snap.exists() && snap.data().list) {
+                        window.profileList = snap.data().list;
+                    }
+                } catch(e) {
+                    console.error("클라우드 프로필 목록 조회 실패:", e);
+                }
+            }
+
+            const savedProfiles = localStorage.getItem('sanrio_app_profiles_index');
+            if (savedProfiles) {
+                const localList = JSON.parse(savedProfiles);
+                window.profileList = Array.from(new Set([...window.profileList, ...localList]));
+            }
+
+            localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
+        };
+
+        window.saveProfilesIndex = async function() {
+            localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
+
+            if (db && auth && auth.currentUser) {
+                try {
+                    const listDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'profileList');
+                    await setDoc(listDocRef, { list: window.profileList }, { merge: true });
+                } catch(e) {
+                    console.error("클라우드 프로필 목록 저장 실패:", e);
+                }
+            }
+        };
+
+        // 💡 핸드폰에서도 PC에서 만든 비밀번호가 일치하도록 클라우드에서 최신 데이터를 먼저 불러오는 기능 추가
+        window.promptPinLogin = async function(name) {
+            window.targetLoginProfile = name;
+            document.getElementById('pin-target-name').innerText = name;
+            document.getElementById('pin-input').value = '';
+
+            if (db && auth && auth.currentUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', name);
+                    const snap = await getDoc(docRef);
+                    if (snap.exists()) {
+                        localStorage.setItem(`sanrio_app_profile_${name}`, JSON.stringify(snap.data()));
+                    }
+                } catch(e) {}
+            }
+
+            document.getElementById('pin-login-modal').classList.remove('hidden');
+        };
+
+        window.closePinLoginModal = function() {
+            document.getElementById('pin-login-modal').classList.add('hidden');
+        };
+
+        window.verifyPinLogin = async function() {
+            const enteredPin = document.getElementById('pin-input').value.trim();
+            const name = window.targetLoginProfile;
+            if (!name) { showToast("⚠️ 먼저 로그인할 아이를 선택해주세요!"); return; }
+            if (!/^\d{4}$/.test(enteredPin)) { showToast("🔒 비밀번호 4자리를 입력해주세요!"); return; }
+            let saved = localStorage.getItem(`sanrio_app_profile_${name}`);
+            if (db && auth && auth.currentUser) {
+                try {
+                    const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', name));
+                    if (snap.exists()) {
+                        saved = JSON.stringify(snap.data());
+                        localStorage.setItem(`sanrio_app_profile_${name}`, saved);
+                    }
+                } catch (e) { console.warn('PIN 클라우드 확인 실패, 저장된 기기 정보로 확인합니다.', e); }
+            }
+            let correctPin = null;
+            if (saved) { try { correctPin = JSON.parse(saved).pin; } catch(e) {} }
+            if (correctPin == null) { showToast("⚠️ 저장된 비밀번호를 찾을 수 없어요. 부모님께 확인해주세요."); return; }
+            if (enteredPin === String(correctPin)) {
+                window.closePinLoginModal();
+                window.loadProfileData(name);
+            } else { showToast("❌ 비밀번호가 틀렸습니다!"); }
+        };
+
+        window.loadProfileData = function(name) {
+            window.currentProfileName = name;
+            const saved = localStorage.getItem(`sanrio_app_profile_${name}`);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    window.state.pin = parsed.pin || '0000';
+                    window.state.points = parsed.points || 0;
+                    window.state.activeCharacter = parsed.activeCharacter || 'kuromi';
+                    window.state.unlockedCharacters = parsed.unlockedCharacters || ['kuromi'];
+                    window.state.history = parsed.history || {};
+                } catch (e) {}
+            }
+
+            const todayKey = getTodayKey();
+            if (!window.state.history[todayKey] || !window.state.history[todayKey].tasks || window.state.history[todayKey].tasks.length === 0) {
+                window.state.history[todayKey] = {
+                    tasks: DEFAULT_TASKS.map((item, idx) => ({
+                        id: 'task_' + Date.now() + '_' + idx,
+                        title: item.title,
+                        points: item.points || 10,
+                        completed: false
+                    }))
+                };
+            }
+            window.state.tasks = window.state.history[todayKey].tasks;
+            syncToOnlineCloud();
+            subscribeOnlineDoc(name);
+            localStorage.setItem('sanrio_app_last_active_profile', name);
+
+            document.getElementById('current-profile-name').innerText = name;
+            document.getElementById('user-greeting-name').innerText = name;
+            renderHeader();
+            renderTasks();
+            renderShop();
+            window.closeProfileModal();
+            showToast(`💖 [${name}] 프로필 접속 완료!`);
+        };
+
+        window.openProfileModal = async function() {
+            await window.loadProfiles();
+            const listContainer = document.getElementById('existing-profiles');
+            listContainer.innerHTML = '';
+
+            if (window.profileList.length > 0) {
+                window.profileList.forEach(name => {
+                    const btn = document.createElement('button');
+                    btn.className = `w-full p-2 rounded-xl font-jua text-xs flex justify-between items-center transition ${
+                        name === window.currentProfileName ? 'bg-purple-600 text-white shadow' : 'bg-purple-50 text-purple-900 hover:bg-purple-100'
+                    }`;
+                    btn.onclick = () => {
+                        window.closeProfileModal();
+                        window.promptPinLogin(name);
+                    };
+                    btn.innerHTML = `<span>👤 ${escapeHtml(name)}</span><span class="text-[10px] px-2 py-0.5 rounded-full">로그인</span>`;
+                    listContainer.appendChild(btn);
+                });
+            } else {
+                listContainer.innerHTML = `<p class="text-xs text-gray-400 py-2">등록된 이름이 없어요. 아래에서 등록하세요!</p>`;
+            }
+            document.getElementById('profile-modal').classList.remove('hidden');
+        };
+
+        window.closeProfileModal = function() {
+            document.getElementById('profile-modal').classList.add('hidden');
+        };
+
+        window.createNewProfile = async function() {
+            const name = document.getElementById('new-profile-input').value.trim();
+            const pin = document.getElementById('new-profile-pin').value.trim();
+
+            if (!name) { showToast("⚠️ 이름을 입력해주세요!"); return; }
+            if (!/^\d{4}$/.test(pin)) { showToast("🔒 PIN 번호는 숫자 4자리여야 합니다!"); return; }
+
+            if (window.profileList.includes(name) || localStorage.getItem(`sanrio_app_profile_${name}`)) {
+                showToast("⚠️ 이미 등록된 이름이에요. 다른 이름을 사용해주세요!"); return;
+            }
+            window.profileList.push(name);
+            await window.saveProfilesIndex();
+
+            window.state.pin = pin;
+            window.state.points = 0;
+            window.state.activeCharacter = 'kuromi';
+            window.state.unlockedCharacters = ['kuromi'];
+            window.state.history = {};
+
+            document.getElementById('new-profile-input').value = '';
+            document.getElementById('new-profile-pin').value = '';
+            window.loadProfileData(name);
+        };
+
+        window.openParentResetModal = function() {
+            const num1 = Math.floor(Math.random() * 10) + 11;
+            const num2 = Math.floor(Math.random() * 8) + 2;
+            window.currentQuizAnswer = num1 * num2;
+            document.getElementById('math-quiz-question').innerText = `${num1} × ${num2} = ?`;
+            document.getElementById('parent-reset-modal').classList.remove('hidden');
+        };
+        window.closeParentResetModal = function() { document.getElementById('parent-reset-modal').classList.add('hidden'); };
+        window.executePinReset = function() {
+            const ans = parseInt(document.getElementById('math-quiz-answer').value.trim(), 10);
+            const newPin = document.getElementById('reset-new-pin').value.trim();
+            if (ans !== window.currentQuizAnswer) { showToast("❌ 정답이 틀렸습니다!"); return; }
+            if (!/^\d{4}$/.test(newPin)) { showToast("🔒 새 PIN은 숫자 4자리여야 합니다!"); return; }
+            window.state.pin = newPin;
+            syncToOnlineCloud();
+            showToast("✅ 비밀번호가 재설정되었습니다!");
+            window.closeParentResetModal();
+            window.closePinLoginModal();
+        };
+
+        window.toggleParentMode = function() {
+            window.isParentMode = !window.isParentMode;
+            const btn = document.getElementById('parent-mode-btn');
+            btn.className = window.isParentMode ? "bg-pink-500 text-white px-2 py-0.5 rounded-full text-[10px] font-jua shadow animate-pulse" : "bg-white/20 text-white px-2 py-0.5 rounded-full text-[10px] font-jua";
+            btn.innerText = window.isParentMode ? "👨‍👩‍👧 부모님 모드: ON" : "👨‍👩‍👧 부모님 모드: OFF";
+            renderTasks();
+        };
+
+        function renderHeader() {
+            document.getElementById('user-points').innerText = window.state.points;
+            const activeChar = CHARACTERS.find(c => c.id === window.state.activeCharacter) || CHARACTERS[0];
+            document.getElementById('active-avatar-container').innerHTML = SANRIO_SVGS[activeChar.id] || SANRIO_SVGS['kuromi'];
+            document.getElementById('active-char-name').innerText = activeChar.name;
+            document.getElementById('character-speech').innerText = `"${window.currentProfileName || '친구'}야! ${activeChar.speech.replace(/^"|"$/g, '')}"`;
+
+            const now = new Date();
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            document.getElementById('today-date-text').innerText = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${days[now.getDay()]})`;
+        }
+
+        function renderTasks() {
+            const listEl = document.getElementById('task-list');
+            listEl.innerHTML = '';
+            let completedCount = 0;
+
+            if (window.state.tasks.length === 0) {
+                listEl.innerHTML = `<div class="bg-white p-6 rounded-2xl text-center text-gray-400 font-jua"><p>등록된 목표가 없어요!</p></div>`;
+            }
+
+            window.state.tasks.forEach(task => {
+                if (task.completed) completedCount++;
+                const taskDiv = document.createElement('div');
+                taskDiv.className = `p-3 rounded-2xl bg-white shadow-sm border flex items-center justify-between ${task.completed ? 'border-purple-200 bg-purple-50/50' : 'border-purple-100'}`;
+                taskDiv.innerHTML = `
+                    <div class="flex items-center space-x-3 flex-1 overflow-hidden pr-2">
+                        <button onclick="toggleTask('${task.id}')" class="w-7 h-7 rounded-full border-2 flex items-center justify-center ${task.completed ? 'bg-purple-600 border-transparent text-white' : 'border-purple-300 text-transparent'}"><i class="fas fa-check text-xs"></i></button>
+                        <span class="text-xs font-dodum truncate ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">${escapeHtml(task.title)}</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <span class="text-[10px] font-jua px-2 py-0.5 rounded-full ${task.completed ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-800'}">+${task.points || 10}P</span>
+                        <button onclick="deleteTask('${task.id}')" class="text-gray-300 hover:text-red-400 text-xs p-1"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                `;
+                listEl.appendChild(taskDiv);
+            });
+
+            const percent = window.state.tasks.length > 0 ? Math.round((completedCount / window.state.tasks.length) * 100) : 0;
+            document.getElementById('progress-percent').innerText = `${percent}%`;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+        }
+
+        function renderShop() {
+            const gridEl = document.getElementById('character-grid');
+            gridEl.innerHTML = '';
+            CHARACTERS.forEach(char => {
+                const isUnlocked = window.state.unlockedCharacters.includes(char.id);
+                const isActive = window.state.activeCharacter === char.id;
+                const canAfford = window.state.points >= char.cost;
+
+                const card = document.createElement('div');
+                card.className = `bg-white p-3 rounded-2xl border-2 shadow-sm flex flex-col items-center text-center relative ${isActive ? 'border-purple-500' : 'border-purple-100'}`;
+                card.innerHTML = `
+                    ${isActive ? `<span class="absolute top-2 left-2 bg-purple-600 text-white text-[9px] font-jua px-2 py-0.5 rounded-full">장착중</span>` : ''}
+                    <div class="w-14 h-14 my-2 p-1 bg-purple-50 rounded-2xl ${!isUnlocked ? 'filter opacity-40 grayscale' : ''}">${SANRIO_SVGS[char.id]}</div>
+                    <h3 class="font-jua text-xs text-gray-800 mb-1">${char.name}</h3>
+                    ${isUnlocked ? `<button onclick="setActiveCharacter('${char.id}')" ${isActive ? 'disabled' : ''} class="w-full mt-1 py-1 rounded-xl font-jua text-xs ${isActive ? 'bg-purple-100 text-purple-400' : 'bg-purple-600 text-white shadow'}">${isActive ? '사용중' : '선택'}</button>` 
+                    : `<button onclick="unlockCharacter('${char.id}', ${char.cost})" ${!canAfford ? 'disabled' : ''} class="w-full mt-1 py-1 rounded-xl font-jua text-xs ${canAfford ? 'bg-pink-500 text-white shadow' : 'bg-gray-100 text-gray-400'}">${char.cost}P 해금</button>`}
+                `;
+                gridEl.appendChild(card);
+            });
+        }
+
+        window.toggleTask = function(id) {
+            const task = window.state.tasks.find(t => t.id === id);
+            if (!task) return;
+            task.completed = !task.completed;
+            const pts = task.points || 10;
+            if (task.completed) {
+                window.state.points += pts;
+                if (typeof confetti === 'function') confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+                showToast(`🎉 +${pts} 포인트 획득!`);
+            } else {
+                window.state.points = Math.max(0, window.state.points - pts);
+                showToast(`⚡ 포인트가 차감되었습니다.`);
+            }
+            syncToOnlineCloud();
+            renderHeader();
+            renderTasks();
+            renderShop();
+        };
+
+        window.deleteTask = function(id) {
+            window.state.tasks = window.state.tasks.filter(t => t.id !== id);
+            syncToOnlineCloud();
+            renderTasks();
+        };
+
+        window.updatePointDisplay = function(value) {
+            const input = document.getElementById('custom-task-points');
+            const points = Math.max(1, Math.min(100, parseInt(value, 10) || 1));
+            if (input && String(input.value) !== String(points)) input.value = points;
+            const display = document.getElementById('point-preset-display');
+            if (display) display.innerText = `${points} P`;
+        };
+        window.applyPreset = function(title, points) {
+            const titleInput = document.getElementById('custom-task-input');
+            if (titleInput) titleInput.value = title;
+            const pointsInput = document.getElementById('custom-task-points');
+            if (pointsInput) pointsInput.value = String(Math.max(1, Math.min(100, parseInt(points, 10) || 10)));
+            window.updatePointDisplay(pointsInput ? pointsInput.value : points);
+        };
+        window.openAddTaskModal = function() { document.getElementById('add-task-modal').classList.remove('hidden'); };
+        window.closeAddTaskModal = function() { document.getElementById('add-task-modal').classList.add('hidden'); };
+        window.openCloudConfigModal = function() { document.getElementById('cloud-config-modal').classList.remove('hidden'); };
+        window.closeCloudConfigModal = function() { document.getElementById('cloud-config-modal').classList.add('hidden'); };
+
+        window.saveNewTask = async function() {
+            const titleInput = document.getElementById('custom-task-input');
+            const pointsInput = document.getElementById('custom-task-points');
+            const title = titleInput.value.trim();
+            const rawPoints = Number.parseInt(pointsInput.value, 10);
+            const points = Number.isFinite(rawPoints) ? Math.max(1, Math.min(100, rawPoints)) : 10;
+            if (!window.currentProfileName) { showToast("⚠️ 먼저 아이 프로필에 로그인해주세요!"); return; }
+            if (!title) { showToast("⚠️ 목표를 입력해주세요!"); return; }
+            pointsInput.value = String(points);
+            const todayKey = getTodayKey();
+            window.state.tasks.push({ id: 'task_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), title, points, completed: false });
+            if (!window.state.history[todayKey]) window.state.history[todayKey] = {};
+            window.state.history[todayKey].tasks = window.state.tasks;
+            await syncToOnlineCloud();
+            renderTasks();
+            titleInput.value = '';
+            window.closeAddTaskModal();
+            showToast("✨ 새로운 목표 추가 완료!");
+        };
+
+        window.unlockCharacter = function(charId, cost) {
+            if (window.state.unlockedCharacters.includes(charId)) { window.setActiveCharacter(charId); return; }
+            if (window.state.points < cost) { showToast("🔒 포인트가 부족해요! "); return; }
+            window.state.points -= cost;
+            window.state.unlockedCharacters.push(charId);
+            window.state.activeCharacter = charId;
+            syncToOnlineCloud();
+            renderHeader();
+            renderShop();
+            showToast("💖 새 캐릭터 해금 완료!");
+        };
+
+        window.setActiveCharacter = function(charId) {
+            window.state.activeCharacter = charId;
+            syncToOnlineCloud();
+            renderHeader();
+            renderShop();
+            showToast("👑 대표 캐릭터 변경!");
+        };
+
+        window.switchTab = function(tabName) {
+            ['tasks', 'shop', 'calendar'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "flex-1 py-1 flex flex-col items-center text-gray-400 font-jua transition";
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).className = "flex-1 py-1 flex flex-col items-center text-purple-600 font-jua transition";
+            if (tabName === 'shop') renderShop();
+            if (tabName === 'calendar') window.renderCalendar();
+        };
+
+        // 📅 달력 렌더링 및 완료 점, 상세 내역 복구
+        window.renderCalendar = function() {
+            const date = window.state.viewMonth;
+            const year = date.getFullYear();
+            const month = date.getMonth();
+
+            document.getElementById('calendar-month-title').innerText = `${year}.${String(month + 1).padStart(2, '0')}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+
+            const container = document.getElementById('calendar-days');
+            container.innerHTML = '';
+
+            for (let i = 0; i < firstDay; i++) {
+                const blank = document.createElement('div');
+                blank.className = 'h-8';
+                container.appendChild(blank);
+            }
+
+            for (let d = 1; d <= lastDate; d++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dayLog = window.state.history[dateKey];
+
+                const dayBtn = document.createElement('button');
+                dayBtn.onclick = () => window.selectCalendarDate(dateKey);
+
+                let hasCompleted = false;
+                if (dayLog && dayLog.tasks) {
+                    const count = dayLog.tasks.filter(t => t.completed).length;
+                    if (count > 0) hasCompleted = true;
+                }
+
+                const isToday = dateKey === getTodayKey();
+
+                dayBtn.className = `h-8 rounded-xl flex flex-col items-center justify-center relative transition-all ${
+                    isToday ? 'border-2 border-purple-500 font-bold bg-purple-50' : 'hover:bg-purple-50'
+                }`;
+
+                dayBtn.innerHTML = `
+                    <span class="text-[11px] ${isToday ? 'text-purple-700 font-bold' : 'text-gray-700'}">${d}</span>
+                    ${hasCompleted ? `<span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>` : '<span class="w-1.5 h-1.5 opacity-0"></span>'}
+                `;
+                container.appendChild(dayBtn);
+            }
+        };
+
+        window.selectCalendarDate = function(dateKey) {
+            const dateTitle = document.getElementById('selected-date-title');
+            const datePoints = document.getElementById('selected-date-points');
+            const taskList = document.getElementById('selected-date-tasks');
+
+            const dayLog = window.state.history[dateKey];
+            dateTitle.innerText = `${dateKey} [${window.currentProfileName}] 기록`;
+
+            if (!dayLog || !dayLog.tasks || dayLog.tasks.length === 0) {
+                datePoints.innerText = '기록 없음';
+                taskList.innerHTML = `<li class="text-center py-3 text-gray-400 font-jua">해당 날짜의 학습 내역이 없습니다.</li>`;
+                return;
+            }
+
+            const completedTasks = dayLog.tasks.filter(t => t.completed);
+            const earnedP = completedTasks.reduce((sum, t) => sum + (t.points || 10), 0);
+            datePoints.innerText = `완료 ${completedTasks.length}/${dayLog.tasks.length}개 (+${earnedP}P)`;
+
+            taskList.innerHTML = '';
+            dayLog.tasks.forEach(t => {
+                const taskPts = t.points || 10;
+                const li = document.createElement('li');
+                li.className = `flex items-center justify-between p-2 rounded-lg ${t.completed ? 'bg-purple-50 text-purple-900' : 'bg-gray-50 text-gray-400'}`;
+                li.innerHTML = `
+                    <div class="flex items-center space-x-1.5">
+                        <span class="${t.completed ? '' : 'line-through'}">${escapeHtml(t.title)}</span>
+                        <span class="text-[9px] font-jua px-1.5 py-0.2 bg-purple-200/60 rounded text-purple-800">+${taskPts}P</span>
+                    </div>
+                    <span class="font-jua text-[10px] ${t.completed ? 'text-purple-600' : 'text-gray-400'}">${t.completed ? '완료 ✨' : '미완료'}</span>
+                `;
+                taskList.appendChild(li);
+            });
+        };
+
+        window.changeMonth = function(delta) {
+            window.state.viewMonth.setMonth(window.state.viewMonth.getMonth() + delta);
+            window.renderCalendar();
+        };
+
+        function showToast(message) {
+            const toast = document.getElementById('toast-message');
+            document.getElementById('toast-text').innerText = message;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            setTimeout(() => toast.classList.remove('opacity-100') || toast.classList.add('opacity-0'), 2200);
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/[&<"']/g, m => ({ '&': '&amp;', '<': '&lt;', '"': '&quot;', "'": '&#039;' }[m]));
+        }
+
+        window.onload = async function() {
+            await initFirebase();
+            await window.loadProfiles();
+            const lastActive = localStorage.getItem('sanrio_app_last_active_profile');
+            if (lastActive && window.profileList.includes(lastActive)) {
+                window.loadProfileData(lastActive);
+            } else if (window.profileList.length > 0) {
+                window.loadProfileData(window.profileList[0]);
+            } else {
+                window.openProfileModal();
+            }
+        };
+
+        // 채팅 시스템 관련
+        let unsubscribeMessages = null;
+        function getActiveProfile() {
+            return window.currentProfileName || localStorage.getItem('sanrio_app_last_active_profile') || "기본아이";
+        }
+        window.openChat = function() {
+            document.getElementById('chatModal').style.display = 'flex';
+            window.listenMessages();
+        };
+        window.closeChat = function() {
+            document.getElementById('chatModal').style.display = 'none';
+            if (unsubscribeMessages) { unsubscribeMessages(); unsubscribeMessages = null; }
+        };
+        window.listenMessages = function() {
+            const activeProfile = getActiveProfile();
+            if (!db || !activeProfile) return;
+            if (unsubscribeMessages) unsubscribeMessages();
+            try {
+                const msgRef = doc(db, "artifacts", appId, "public", "data", "profiles", activeProfile);
+                unsubscribeMessages = onSnapshot(msgRef, (docSnap) => {
+                    const messages = docSnap.exists() ? (docSnap.data().chatMessages || []) : [];
+                    const container = document.getElementById('chatMessages');
+                    container.innerHTML = messages.length === 0 ? '<div style="text-align:center; color:#888; font-size:13px;">첫 메시지를 남겨보세요! 💌</div>' : '';
+                    messages.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.style.cssText = "margin:6px 0; padding:8px 12px; border-radius:12px; max-width:75%; word-break:break-word;";
+                        div.style.background = msg.sender === 'parent' ? '#f3e8ff' : '#ffffff';
+                        const sender = document.createElement('div');
+                        sender.style.cssText = "font-weight:bold; font-size:11px; color:#7e22ce;";
+                        sender.textContent = msg.senderName || '친구';
+                        const body = document.createElement('div');
+                        body.style.fontSize = '13px';
+                        body.textContent = msg.text || '';
+                        div.append(sender, body);
+                        container.appendChild(div);
+                    });
+                    container.scrollTop = container.scrollHeight;
+                });
+            } catch(e) {}
+        };
+        window.sendChatMessage = async function() {
+            const input = document.getElementById('chatInput');
+            const text = input ? input.value.trim() : '';
+            if (!text) return;
+            const activeProfile = getActiveProfile();
+            if (!db || !auth || !auth.currentUser) { alert("실시간 메시지는 온라인 연결 후 사용할 수 있어요."); return; }
+            try {
+                const isParent = confirm("부모님으로 보내시겠습니까?\n[확인]: 부모님 / [취소]: 아이");
+                const docRef = doc(db, "artifacts", appId, "public", "data", "profiles", activeProfile);
+                const docSnap = await getDoc(docRef);
+                const currentMsgs = docSnap.exists() ? (docSnap.data().chatMessages || []) : [];
+                currentMsgs.push({
+                    sender: isParent ? 'parent' : 'child',
+                    senderName: isParent ? '👑 부모님' : '👧 아이',
+                    text: text,
+                    time: new Date().toISOString()
+                });
+                await setDoc(docRef, { chatMessages: currentMsgs }, { merge: true });
+                input.value = '';
+                window.listenMessages();
+            } catch (err) { alert("전송 실패: " + err.message); }
+        };
+    </script>
+
+    <!-- 우측 하단 쿠로미 메시지 버튼 -->
+    <div class="chat-btn-container">
+        <button class="chat-open-btn" onclick="openChat()">✉️ 쿠로미 메시지함</button>
+    </div>
+
+    <!-- 쿠로미 대화함 팝업 모달창 -->
+    <div id="chatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center; padding: 15px;">
+        <div style="background: white; width: 100%; max-width: 340px; height: 460px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+            <div style="background: #a855f7; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 15px;">
+                <span>💌 쿠로미 대화함</span>
+                <button onclick="closeChat()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+            </div>
+            <div id="chatMessages" style="flex: 1; padding: 15px; overflow-y: auto; background: #f9f5ff; display: flex; flex-direction: column; gap: 8px;"></div>
+            <div style="padding: 10px 12px; background: white; border-top: 1px solid #eee;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding-right: 6px;"><input type="text" id="chatInput" placeholder="메시지 입력..." style="width: 100%; height: 38px; padding: 0 10px; border: 1px solid #ddd; border-radius: 10px; outline: none; font-size: 13px;" onkeypress="if(event.key==='Enter') sendChatMessage()"></td>
+                        <td style="width: 65px;"><button onclick="sendChatMessage()" style="width: 100%; height: 38px; background: #a855f7; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; cursor: pointer;">전송</button></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
