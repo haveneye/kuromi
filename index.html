@@ -1783,7 +1783,7 @@
                         div.style.background = msg.sender === 'parent' ? '#f3e8ff' : '#ffffff';
                         const sender = document.createElement('div');
                         sender.style.cssText = "font-weight:bold; font-size:11px; color:#7e22ce;";
-                        sender.textContent = msg.senderName || '친구';
+                        sender.textContent = msg.sender === 'child' ? '👧 ' + activeProfile : (msg.senderName || '부모님');
                         const body = document.createElement('div');
                         body.style.fontSize = '13px';
                         body.textContent = msg.text || '';
@@ -1814,7 +1814,7 @@
                 currentMsgs.push({
                     id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)),
                     sender: isParent ? 'parent' : 'child',
-                    senderName: isParent ? "👑 " + getParentSenderName() : '👧 아이',
+                    senderName: isParent ? "👑 " + getParentSenderName() : '👧 ' + activeProfile,
                     text: text,
                     time: new Date().toISOString()
                 });
