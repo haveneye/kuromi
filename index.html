@@ -897,11 +897,11 @@
                     : (lastActive && window.profileList.includes(lastActive) ? lastActive : window.profileList[0]);
                 if (preferredProfile) {
                     window.loadProfileData(preferredProfile);
+                    showToast(window.parentDisplayName + ' 계정으로 부모 메뉴를 열었어요.');
                 } else {
-                    showToast('아이 프로필을 먼저 등록해주세요.');
+                    showToast('부모 메뉴를 열었어요. 아이 프로필을 먼저 등록해주세요.');
                     window.openProfileModal();
                 }
-                showToast(window.parentDisplayName + ' 계정으로 부모 메뉴를 열었어요.');
             } catch (error) {
                 console.error('부모 PIN 처리 실패:', error);
                 message.textContent = error.message || 'PIN을 처리하지 못했어요. Firebase 연결과 권한을 확인해주세요.';
