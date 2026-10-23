@@ -165,6 +165,7 @@
                         <h2 class="font-jua text-purple-900 text-xs">👨‍👩‍👧 아이별 할 일</h2>
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] text-gray-400">아이를 눌러 바꿔요</span>
+                            <button id="parent-push-button" onclick="enableParentNotifications()" class="bg-purple-100 text-purple-700 border border-purple-200 px-2 py-1 rounded-lg text-[10px] font-jua">🔔 알림 켜기</button>
                             <button onclick="openPointsAdjustModal()" class="bg-yellow-100 text-amber-700 border border-yellow-200 px-2 py-1 rounded-lg text-[10px] font-jua">⭐ 포인트 조절</button>
                         </div>
                     </div>
@@ -389,10 +390,15 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocFromServer, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getMessaging, getToken, isSupported, onMessage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging.js";
 
         let db = null;
         let auth = null;
         let unsubscribeDoc = null;
+        let messaging = null;
+        window.parentPushVapidKey = '';
+        window.parentPushServerReady = false;
+        window.pendingNotificationChild = '';
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'kuromi-study-default';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
@@ -963,16 +969,25 @@
                 }
                 window.isParentMode = true;
                 window.parentDisplayName = parentRoleNames[role];
+                localStorage.setItem('sanrio_app_last_parent_role', role);
                 window.closeParentAccountModal();
                 window.closeProfileModal();
                 window.updateParentAccountUI();
 
+                const notificationChild = window.pendingNotificationChild;
                 const lastActive = localStorage.getItem('sanrio_app_last_active_profile');
-                const preferredProfile = window.currentProfileName && window.profileList.includes(window.currentProfileName)
-                    ? window.currentProfileName
-                    : (lastActive && window.profileList.includes(lastActive) ? lastActive : window.profileList[0]);
+                const preferredProfile = notificationChild && window.profileList.includes(notificationChild)
+                    ? notificationChild
+                    : window.currentProfileName && window.profileList.includes(window.currentProfileName)
+                        ? window.currentProfileName
+                        : (lastActive && window.profileList.includes(lastActive) ? lastActive : window.profileList[0]);
                 if (preferredProfile) {
-                    window.loadProfileData(preferredProfile);
+                    await window.loadProfileData(preferredProfile);
+                    if (notificationChild && notificationChild === preferredProfile) {
+                        window.pendingNotificationChild = '';
+                        window.openChat();
+                        window.history.replaceState({}, '', window.location.pathname);
+                    }
                     showToast(window.parentDisplayName + ' 계정으로 부모 메뉴를 열었어요.');
                 } else {
                     showToast('부모 메뉴를 열었어요. 아이 프로필을 먼저 등록해주세요.');
@@ -1444,10 +1459,64 @@
         }
 
         window.onload = async function() {
+            const notificationChild = new URLSearchParams(window.location.search).get('notifyChild');
+            if (notificationChild) window.pendingNotificationChild = notificationChild;
             await initFirebase();
             await window.loadProfiles();
+            if (db && auth && auth.currentUser) {
+                try {
+                    const pushConfig = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'config', 'pushSettings'));
+                    if (pushConfig.exists()) {
+                        window.parentPushVapidKey = pushConfig.data().vapidKey || '';
+                        window.parentPushServerReady = pushConfig.data().serverReady === true;
+                    }
+                } catch (error) {
+                    console.warn('푸시 알림 설정을 읽지 못했어요.', error);
+                }
+            }
+            const savedParentRole = localStorage.getItem('sanrio_app_last_parent_role');
+            if (savedParentRole === 'dad' || savedParentRole === 'mom') document.getElementById('parent-role').value = savedParentRole;
             window.updateParentAccountUI();
             window.openProfileModal();
+        };
+
+        window.enableParentNotifications = async function() {
+            if (!window.isParentMode) { showToast('부모님 메뉴에 들어온 뒤 알림을 켜주세요.'); return; }
+            const button = document.getElementById('parent-push-button');
+            if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+                showToast('이 브라우저에서는 웹 알림을 지원하지 않아요.');
+                return;
+            }
+            if (!db || !auth || !auth.currentUser) { showToast('Firebase 온라인 연결을 확인해주세요.'); return; }
+            try {
+                if (!window.parentPushVapidKey || !window.parentPushServerReady) {
+                    showToast('푸시 알림 설정이 아직 완료되지 않았어요.');
+                    return;
+                }
+                const permission = await Notification.requestPermission();
+                if (!(await isSupported())) { showToast('이 기기에서는 Firebase 푸시 알림을 지원하지 않아요.'); return; }
+                if (permission !== 'granted') { showToast('휴대폰 설정에서 알림을 허용해주세요.'); return; }
+                const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+                messaging = getMessaging();
+                const token = await getToken(messaging, { vapidKey: window.parentPushVapidKey, serviceWorkerRegistration: registration });
+                if (!token) { showToast('이 휴대폰을 알림 수신 목록에 등록하지 못했어요.'); return; }
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'config', 'parentDevice_' + auth.currentUser.uid), {
+                    token,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+                if (button) { button.textContent = '🔔 알림 켜짐'; button.disabled = true; }
+                showToast('이 휴대폰을 부모 알림에 등록했어요. 다른 부모 휴대폰도 같은 방법으로 켜주세요.');
+                onMessage(messaging, payload => {
+                    const data = payload.data || {};
+                    navigator.serviceWorker.ready.then(sw => sw.showNotification(data.title || '아이에게 메시지가 왔어요 💌', {
+                        body: data.body || '쿠로미 메시지함에서 확인해보세요.',
+                        data: { url: data.url || window.location.href }
+                    }));
+                });
+            } catch (error) {
+                console.error('부모 휴대폰 알림 등록 실패:', error);
+                showToast('알림 등록에 실패했어요. HTTPS 주소와 Firebase 설정을 확인해주세요.');
+            }
         };
 
         // 채팅 시스템 관련
@@ -1552,6 +1621,7 @@
                 const docSnap = await getDoc(docRef);
                 const currentMsgs = docSnap.exists() ? (docSnap.data().chatMessages || []) : [];
                 currentMsgs.push({
+                    id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)),
                     sender: isParent ? 'parent' : 'child',
                     senderName: isParent ? "👑 " + getParentSenderName() : '👧 아이',
                     text: text,
