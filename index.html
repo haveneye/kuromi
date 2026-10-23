@@ -1017,7 +1017,6 @@
             while (nextCharacter && window.state.points >= nextCharacter.cost) {
                 window.state.points -= nextCharacter.cost;
                 window.state.unlockedCharacters.push(nextCharacter.id);
-                window.state.activeCharacter = nextCharacter.id;
                 newlyUnlocked.push(nextCharacter);
                 nextCharacter = CHARACTERS
                     .filter(character => character.cost > 0 && !window.state.unlockedCharacters.includes(character.id))
