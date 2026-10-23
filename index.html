@@ -442,6 +442,8 @@
         window.isParentMode = false;
         window.parentDisplayName = '';
         window.parentPinSettings = null;
+        window.parentMessageUnsubs = {};
+        window.parentUnreadCounts = {};
 
         window.state = {
             pin: '0000',
@@ -894,6 +896,7 @@
             if (window.isParentMode) {
                 window.isParentMode = false;
                 window.parentDisplayName = '';
+                window.stopParentMessageNotifications();
                 window.updateParentAccountUI();
                 showToast('부모님 메뉴를 잠갔어요.');
                 return;
@@ -972,6 +975,8 @@
                 localStorage.setItem('sanrio_app_last_parent_role', role);
                 window.closeParentAccountModal();
                 window.closeProfileModal();
+                await window.loadProfiles();
+                window.startParentMessageNotifications();
                 window.updateParentAccountUI();
 
                 const notificationChild = window.pendingNotificationChild;
@@ -1027,7 +1032,8 @@
                 const detail = document.createElement('span');
                 detail.className = 'block mt-1 text-[9px] text-gray-400';
                 if (name === window.currentProfileName) points = window.state.points || 0;
-                detail.textContent = '⭐ ' + points + 'P · 눌러서 할 일 보기';
+                const unread = window.parentUnreadCounts[name] || 0;
+                detail.textContent = '⭐ ' + points + 'P · 눌러서 할 일 보기' + (unread ? ' · 💌 새 메시지 ' + unread : '');
                 button.append(title, detail);
                 list.appendChild(button);
             });
@@ -1534,7 +1540,51 @@
         function getParentSenderName() {
             return window.parentDisplayName || "부모님";
         }
-        window.openChat = function() {
+        function parentLastSeenKey(profileName) {
+            return 'sanrio_app_parent_messages_seen_' + encodeURIComponent(profileName);
+        }
+        function getChildUnreadMessages(profileName, messages) {
+            const lastSeen = Date.parse(localStorage.getItem(parentLastSeenKey(profileName)) || '1970-01-01T00:00:00.000Z') || 0;
+            return messages.filter(message => message.sender === 'child' && (Date.parse(message.time || '') || 0) > lastSeen);
+        }
+        function updateParentMessageBadge() {
+            const button = document.querySelector('.chat-open-btn');
+            if (!button) return;
+            const total = Object.values(window.parentUnreadCounts).reduce((sum, count) => sum + count, 0);
+            button.innerHTML = total
+                ? '✉️ 쿠로미 메시지함 <span style="background:#fff;color:#7e22ce;border-radius:999px;padding:1px 6px;font-size:11px;">' + total + '</span>'
+                : '✉️ 쿠로미 메시지함';
+            if (window.isParentMode && typeof window.renderParentChildSelector === 'function') window.renderParentChildSelector();
+        }
+        window.stopParentMessageNotifications = function() {
+            Object.values(window.parentMessageUnsubs).forEach(unsubscribe => unsubscribe());
+            window.parentMessageUnsubs = {};
+            window.parentUnreadCounts = {};
+            updateParentMessageBadge();
+        };
+        window.startParentMessageNotifications = function() {
+            window.stopParentMessageNotifications();
+            if (!window.isParentMode || !db || !auth || !auth.currentUser) return;
+            window.profileList.forEach(profileName => {
+                let previousIds = null;
+                const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profileName);
+                window.parentMessageUnsubs[profileName] = onSnapshot(profileRef, snapshot => {
+                    const messages = snapshot.exists() ? (snapshot.data().chatMessages || []) : [];
+                    const currentIds = new Set(messages.map(message => message.id).filter(Boolean));
+                    const newChildMessages = previousIds === null ? [] : messages.filter(message => message.sender === 'child' && message.id && !previousIds.has(message.id));
+                    previousIds = currentIds;
+                    const chatIsOpenForProfile = window.isParentMode && document.getElementById('chatModal').style.display === 'flex' && getChatProfile() === profileName;
+                    if (chatIsOpenForProfile) {
+                        const latestChildTime = messages.filter(message => message.sender === 'child').map(message => Date.parse(message.time || '') || 0).reduce((max, value) => Math.max(max, value), 0);
+                        if (latestChildTime) localStorage.setItem(parentLastSeenKey(profileName), new Date(latestChildTime).toISOString());
+                    }
+                    window.parentUnreadCounts[profileName] = getChildUnreadMessages(profileName, messages).length;
+                    updateParentMessageBadge();
+                    if (newChildMessages.length && !chatIsOpenForProfile) showToast('💌 ' + profileName + '에게 새 메시지 ' + newChildMessages.length + '개가 왔어요.');
+                }, error => console.error(profileName + ' 메시지 알림 구독 실패:', error));
+            });
+        };
+        window.openChat = function(profileName) {
             const recipientRow = document.getElementById('chat-recipient-row');
             const selector = document.getElementById('chat-recipient');
             const senderLabel = document.getElementById('chat-sender-label');
@@ -1551,10 +1601,16 @@
                     children.forEach(name => {
                         const option = document.createElement('option');
                         option.value = name;
-                        option.textContent = name;
+                        const unread = window.parentUnreadCounts[name] || 0;
+                        option.textContent = name + (unread ? ' · 새 메시지 ' + unread : '');
                         selector.appendChild(option);
                     });
-                    if (children.includes(getActiveProfile())) selector.value = getActiveProfile();
+                    if (profileName && children.includes(profileName)) selector.value = profileName;
+                    else {
+                        const unreadProfile = children.find(name => (window.parentUnreadCounts[name] || 0) > 0);
+                        if (unreadProfile) selector.value = unreadProfile;
+                        else if (children.includes(getActiveProfile())) selector.value = getActiveProfile();
+                    }
                 }
                 senderLabel.innerText = "보내는 사람: 👑 " + getParentSenderName();
                 selector.onchange = window.listenMessages;
@@ -1585,6 +1641,12 @@
                 const msgRef = doc(db, "artifacts", appId, "public", "data", "profiles", activeProfile);
                 unsubscribeMessages = onSnapshot(msgRef, (docSnap) => {
                     const messages = docSnap.exists() ? (docSnap.data().chatMessages || []) : [];
+                    if (window.isParentMode) {
+                        const latestChildTime = messages.filter(msg => msg.sender === 'child').map(msg => Date.parse(msg.time || '') || 0).reduce((max, value) => Math.max(max, value), 0);
+                        if (latestChildTime) localStorage.setItem(parentLastSeenKey(activeProfile), new Date(latestChildTime).toISOString());
+                        window.parentUnreadCounts[activeProfile] = 0;
+                        updateParentMessageBadge();
+                    }
                     container.innerHTML = messages.length === 0 ? '<div style="text-align:center; color:#888; font-size:13px;">첫 메시지를 남겨보세요! 💌</div>' : '';
                     messages.forEach(msg => {
                         const div = document.createElement('div');
