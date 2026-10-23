@@ -169,6 +169,7 @@
                             <button onclick="openPointsAdjustModal()" class="bg-yellow-100 text-amber-700 border border-yellow-200 px-2 py-1 rounded-lg text-[10px] font-jua">⭐ 포인트 조절</button>
                         </div>
                     </div>
+                    <div id="parent-message-notice" class="hidden mb-2 p-2 rounded-xl bg-pink-50 border border-pink-200"></div>
                     <div id="parent-child-list" class="grid grid-cols-2 gap-2"></div>
                 </div>
                 <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-purple-100">
@@ -1554,6 +1555,28 @@
             button.innerHTML = total
                 ? '✉️ 쿠로미 메시지함 <span style="background:#fff;color:#7e22ce;border-radius:999px;padding:1px 6px;font-size:11px;">' + total + '</span>'
                 : '✉️ 쿠로미 메시지함';
+            const notice = document.getElementById('parent-message-notice');
+            if (notice) {
+                notice.replaceChildren();
+                const pending = Object.entries(window.parentUnreadCounts).filter(([, count]) => count > 0);
+                if (window.isParentMode && pending.length) {
+                    notice.classList.remove('hidden');
+                    const heading = document.createElement('p');
+                    heading.className = 'text-[11px] font-jua text-pink-700 mb-1';
+                    heading.textContent = '💌 새 메시지가 도착했어요';
+                    notice.appendChild(heading);
+                    pending.forEach(([profileName, count]) => {
+                        const item = document.createElement('button');
+                        item.type = 'button';
+                        item.className = 'mr-1 mb-1 px-2 py-1 rounded-full bg-white border border-pink-200 text-[10px] font-jua text-purple-700';
+                        item.textContent = profileName + ' 메시지 확인 (' + count + ')';
+                        item.onclick = () => window.openChat(profileName);
+                        notice.appendChild(item);
+                    });
+                } else {
+                    notice.classList.add('hidden');
+                }
+            }
             if (window.isParentMode && typeof window.renderParentChildSelector === 'function') window.renderParentChildSelector();
         }
         window.stopParentMessageNotifications = function() {
