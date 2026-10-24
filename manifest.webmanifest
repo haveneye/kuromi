@@ -1,0 +1,24 @@
+{
+  "name": "쿠로미와 산리오 친구들의 공부 습관",
+  "short_name": "쿠로미 공부",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#a855f7",
+  "theme_color": "#a855f7",
+  "icons": [
+    {
+      "src": "./assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
+
