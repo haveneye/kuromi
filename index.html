@@ -662,6 +662,34 @@
                 window.profileList = Array.from(new Set([...window.profileList, ...localList]));
             }
 
+            // Clear old chat history once for every registered profile, while keeping
+            // points, tasks, PINs, and all other profile data intact.
+            for (const name of window.profileList) {
+                let cachedProfile = {};
+                try {
+                    cachedProfile = JSON.parse(localStorage.getItem(`sanrio_app_profile_${name}`) || '{}');
+                } catch (error) {}
+                if (Array.isArray(cachedProfile.chatMessages) && cachedProfile.chatMessages.length) {
+                    cachedProfile.chatMessages = [];
+                    localStorage.setItem(`sanrio_app_profile_${name}`, JSON.stringify(cachedProfile));
+                }
+
+                if (db && auth && auth.currentUser) {
+                    try {
+                        const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', name);
+                        const profileSnap = await getDocFromServer(profileRef);
+                        if (profileSnap.exists() && profileSnap.data().chatHistoryClearedV1 !== true) {
+                            await setDoc(profileRef, {
+                                chatMessages: [],
+                                chatHistoryClearedV1: true
+                            }, { merge: true });
+                        }
+                    } catch (error) {
+                        console.warn(`${name} 채팅 기록 초기화 실패:`, error);
+                    }
+                }
+            }
+
             localStorage.setItem('sanrio_app_profiles_index', JSON.stringify(window.profileList));
         };
 
