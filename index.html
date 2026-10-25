@@ -485,7 +485,8 @@
             { title: '영어책 2권 읽기', points: 10 },
             { title: '한글책 5권 읽기', points: 20 },
             { title: '줄넘기 100개', points: 10 },
-            { title: '피아노 30분 연습', points: 30 }
+            { title: '피아노 30분 연습', points: 30 },
+            { title: '꿈수레', points: 10 }
         ];
 
         const SIWON_DEFAULT_TASKS = [
@@ -496,7 +497,8 @@
             { title: '배움공책', points: 5 },
             { title: '청크북', points: 30 },
             { title: '영어단어 외우기', points: 10 },
-            { title: '영어글쓰기', points: 20 }
+            { title: '영어글쓰기', points: 20 },
+            { title: '꿈수레', points: 10 }
         ];
 
         function isSiwonProfile(profileName) {
@@ -895,6 +897,19 @@
                     }))
                 };
                 seededDefaultTasks = true;
+            }
+            if ((name === '마리' || isSiwonProfile(name)) &&
+                !window.state.history[todayKey].tasks.some(task => task.title === '꿈수레')) {
+                window.state.history[todayKey] = {
+                    ...window.state.history[todayKey],
+                    tasks: [...window.state.history[todayKey].tasks, {
+                        id: 'task_' + Date.now() + '_dreamcart',
+                        title: '꿈수레',
+                        points: 10,
+                        completed: false
+                    }]
+                };
+                profileTaskResetNeeded = true;
             }
             window.state.tasks = window.state.history[todayKey].tasks;
 
