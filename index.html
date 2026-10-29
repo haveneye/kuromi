@@ -340,7 +340,7 @@
                     <span class="text-[11px] font-jua text-purple-900">⭐ 보상 포인트:</span>
                     <span id="point-preset-display" class="font-jua text-xs text-pink-500 font-bold">10 P</span>
                 </div>
-                <input type="number" id="custom-task-points" value="10" min="1" max="100" class="w-full border border-purple-200 rounded-lg p-1 text-center text-xs font-jua bg-white" oninput="updatePointDisplay(this.value)">
+                <input type="number" id="custom-task-points" value="" placeholder="10" min="1" max="100" inputmode="numeric" class="w-full border border-purple-200 rounded-lg p-1 text-center text-xs font-jua bg-white" oninput="updatePointDisplay(this.value)">
             </div>
             <div class="flex space-x-2">
                 <button onclick="closeAddTaskModal()" class="flex-1 py-1.5 bg-gray-100 rounded-xl text-gray-600 font-jua text-xs">취소</button>
@@ -373,7 +373,7 @@
             <p id="parent-point-target" class="text-center text-xs font-jua text-purple-700"></p>
             <p id="parent-point-current" class="text-center text-[11px] text-gray-500 mt-1 mb-3"></p>
             <label class="block text-[10px] text-purple-800 font-jua mb-1">조절할 포인트
-                <input id="parent-point-amount" type="number" min="1" max="10000" value="10" inputmode="numeric" class="mt-1 w-full border-2 border-purple-100 rounded-xl p-2 text-center text-lg font-jua">
+                <input id="parent-point-amount" type="number" min="1" max="10000" value="" placeholder="10" inputmode="numeric" class="mt-1 w-full border-2 border-purple-100 rounded-xl p-2 text-center text-lg font-jua">
             </label>
             <div class="flex gap-2 mt-3">
                 <button onclick="adjustChildPoints(-1)" class="flex-1 py-2 bg-pink-100 text-pink-700 rounded-xl font-jua text-xs">− 포인트 차감</button>
@@ -1404,9 +1404,11 @@
         };
 
         window.updatePointDisplay = function(value) {
-            const input = document.getElementById('custom-task-points');
-            const points = Math.max(1, Math.min(100, parseInt(value, 10) || 1));
-            if (input && String(input.value) !== String(points)) input.value = points;
+            const rawValue = String(value ?? '').trim();
+            const parsedPoints = Number.parseInt(rawValue, 10);
+            const points = rawValue === '' || !Number.isFinite(parsedPoints)
+                ? 10
+                : Math.max(1, Math.min(100, parsedPoints));
             const display = document.getElementById('point-preset-display');
             if (display) display.innerText = `${points} P`;
         };
@@ -1422,7 +1424,7 @@
             if (!window.currentProfileName) { showToast('포인트를 조절할 아이를 먼저 선택해주세요.'); return; }
             document.getElementById('parent-point-target').textContent = '대상: ' + window.currentProfileName;
             document.getElementById('parent-point-current').textContent = '현재 포인트: ' + (window.state.points || 0) + 'P';
-            document.getElementById('parent-point-amount').value = '10';
+            document.getElementById('parent-point-amount').value = '';
             document.getElementById('parent-point-modal').classList.remove('hidden');
         };
         window.closePointsAdjustModal = function() {
@@ -1431,7 +1433,7 @@
         window.adjustChildPoints = async function(direction) {
             if (!window.isParentMode || !window.currentProfileName) return;
             const input = document.getElementById('parent-point-amount');
-            const amount = Number.parseInt(input.value, 10);
+            const amount = input.value.trim() === '' ? 10 : Number.parseInt(input.value, 10);
             if (!Number.isInteger(amount) || amount < 1 || amount > 10000) {
                 showToast('1부터 10,000까지 입력해주세요.');
                 return;
@@ -1450,7 +1452,11 @@
             showToast(window.currentProfileName + '에게 ' + (direction > 0 ? '+' : '−') + changed + 'P 조정했어요.');
         };
 
-        window.openAddTaskModal = function() { document.getElementById('add-task-modal').classList.remove('hidden'); };
+        window.openAddTaskModal = function() {
+            document.getElementById('custom-task-points').value = '';
+            window.updatePointDisplay('');
+            document.getElementById('add-task-modal').classList.remove('hidden');
+        };
         window.closeAddTaskModal = function() { document.getElementById('add-task-modal').classList.add('hidden'); };
         window.openCloudConfigModal = function() { document.getElementById('cloud-config-modal').classList.remove('hidden'); };
         window.closeCloudConfigModal = function() { document.getElementById('cloud-config-modal').classList.add('hidden'); };
@@ -1485,7 +1491,7 @@
             const titleInput = document.getElementById('custom-task-input');
             const pointsInput = document.getElementById('custom-task-points');
             const title = titleInput.value.trim();
-            const rawPoints = Number.parseInt(pointsInput.value, 10);
+            const rawPoints = pointsInput.value.trim() === '' ? 10 : Number.parseInt(pointsInput.value, 10);
             const points = Number.isFinite(rawPoints) ? Math.max(1, Math.min(100, rawPoints)) : 10;
             if (!window.currentProfileName) { showToast("⚠️ 먼저 아이 프로필에 로그인해주세요!"); return; }
             if (!title) { showToast("⚠️ 목표를 입력해주세요!"); return; }
@@ -1761,6 +1767,14 @@
                 return selector ? selector.value : "";
             }
             return getActiveProfile();
+        }
+        function formatMessageTime(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '';
+            return new Intl.DateTimeFormat('ko-KR', {
+                month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true
+            }).format(date);
         }
         function getParentSenderName() {
             return window.parentDisplayName || "부모님";
@@ -2056,13 +2070,20 @@
                         const div = document.createElement('div');
                         div.style.cssText = "margin:6px 0; padding:8px 12px; border-radius:12px; max-width:75%; word-break:break-word;";
                         div.style.background = msg.sender === 'parent' ? '#f3e8ff' : '#ffffff';
+                        const meta = document.createElement('div');
+                        meta.style.cssText = "display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:2px;";
                         const sender = document.createElement('div');
-                        sender.style.cssText = "font-weight:bold; font-size:11px; color:#7e22ce;";
+                        sender.style.cssText = "font-weight:bold; font-size:11px; color:#7e22ce; min-width:0; overflow-wrap:anywhere;";
                         sender.textContent = msg.sender === 'child' ? '👧 ' + activeProfile : (msg.senderName || '부모님');
+                        const time = document.createElement('span');
+                        time.style.cssText = "flex-shrink:0; font-size:9px; color:#8b8492; white-space:nowrap;";
+                        time.textContent = formatMessageTime(msg.time);
+                        meta.appendChild(sender);
+                        if (time.textContent) meta.appendChild(time);
                         const body = document.createElement('div');
                         body.style.fontSize = '13px';
                         body.textContent = msg.text || '';
-                        div.append(sender, body);
+                        div.append(meta, body);
                         container.appendChild(div);
                     });
                     container.scrollTop = container.scrollHeight;
