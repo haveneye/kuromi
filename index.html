@@ -1123,6 +1123,7 @@
                 window.isParentMode = false;
                 window.parentDisplayName = '';
                 localStorage.removeItem(parentRememberedRoleKey);
+                localStorage.removeItem('sanrio_app_last_parent_role');
                 window.stopParentMessageNotifications();
                 window.updateParentAccountUI();
                 showToast('부모님 메뉴를 잠갔어요. 다음 접속 때 PIN이 필요해요.');
@@ -1743,8 +1744,9 @@
             const savedParentRole = localStorage.getItem('sanrio_app_last_parent_role');
             if (savedParentRole === 'dad' || savedParentRole === 'mom') document.getElementById('parent-role').value = savedParentRole;
             window.updateParentAccountUI();
-            const rememberedParentRole = localStorage.getItem(parentRememberedRoleKey);
+            const rememberedParentRole = localStorage.getItem(parentRememberedRoleKey) || savedParentRole;
             if (rememberedParentRole === 'dad' || rememberedParentRole === 'mom') {
+                localStorage.setItem(parentRememberedRoleKey, rememberedParentRole);
                 window.isParentMode = true;
                 window.parentDisplayName = parentRoleNames[rememberedParentRole];
                 window.startParentMessageNotifications();
