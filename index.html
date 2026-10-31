@@ -857,6 +857,9 @@
             const profileTaskResetKey = name === '마리'
                 ? 'mariDefaultTasksUpdatedV3'
                 : (isSiwonProfile(name) ? 'siwonDefaultTasksUpdatedV1' : null);
+            if (isSiwonProfile(name)) {
+                window.state.siwonMathTasksUpdatedV1 = profileData?.siwonMathTasksUpdatedV1 === true;
+            }
             if (profileTaskResetKey) {
                 window.state[profileTaskResetKey] = profileData?.[profileTaskResetKey] === true;
             }
@@ -915,6 +918,25 @@
                 };
                 profileTaskResetNeeded = true;
             }
+            let siwonMathTasksMigrationNeeded = false;
+            if (isSiwonProfile(name) && !window.state.siwonMathTasksUpdatedV1) {
+                const currentDay = window.state.history[todayKey];
+                const keptTasks = currentDay.tasks.filter(task => !String(task.title || '').includes('수학'));
+                const mathTasks = SIWON_DEFAULT_TASKS
+                    .filter(item => item.title.includes('수학'))
+                    .map((item, idx) => ({
+                        id: 'task_' + Date.now() + '_siwon_math_' + idx,
+                        title: item.title,
+                        points: item.points,
+                        completed: false
+                    }));
+                window.state.history[todayKey] = {
+                    ...currentDay,
+                    tasks: [...mathTasks, ...keptTasks]
+                };
+                window.state.siwonMathTasksUpdatedV1 = true;
+                siwonMathTasksMigrationNeeded = true;
+            }
             window.state.tasks = window.state.history[todayKey].tasks;
 
             try {
@@ -924,7 +946,7 @@
                 console.warn('이 기기에 프로필을 저장하지 못했습니다.', error);
             }
 
-            if (cloudReadSucceeded && (!cloudData || seededDefaultTasks || characterUnlockMigrationNeeded || mariTasksAndChatResetNeeded || profileTaskResetNeeded) && requestId === window.profileLoadRequestId) {
+            if (cloudReadSucceeded && (!cloudData || seededDefaultTasks || characterUnlockMigrationNeeded || mariTasksAndChatResetNeeded || profileTaskResetNeeded || siwonMathTasksMigrationNeeded) && requestId === window.profileLoadRequestId) {
                 try {
                     await setDoc(profileRef, {
                         ...window.state,
