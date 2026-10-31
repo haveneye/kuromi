@@ -1071,6 +1071,7 @@
 
         const parentRoleNames = { dad: '아빠', mom: '엄마' };
         const parentPinStorageKey = 'sanrio_app_parent_pin_settings';
+        const parentRememberedRoleKey = 'sanrio_app_parent_remembered_role';
 
         function parentPinBase64(bytes) {
             let binary = '';
@@ -1121,9 +1122,10 @@
             if (window.isParentMode) {
                 window.isParentMode = false;
                 window.parentDisplayName = '';
+                localStorage.removeItem(parentRememberedRoleKey);
                 window.stopParentMessageNotifications();
                 window.updateParentAccountUI();
-                showToast('부모님 메뉴를 잠갔어요.');
+                showToast('부모님 메뉴를 잠갔어요. 다음 접속 때 PIN이 필요해요.');
                 return;
             }
             const message = document.getElementById('parent-pin-message');
@@ -1198,6 +1200,7 @@
                 window.isParentMode = true;
                 window.parentDisplayName = parentRoleNames[role];
                 localStorage.setItem('sanrio_app_last_parent_role', role);
+                localStorage.setItem(parentRememberedRoleKey, role);
                 window.closeParentAccountModal();
                 window.closeProfileModal();
                 await window.loadProfiles();
@@ -1740,7 +1743,21 @@
             const savedParentRole = localStorage.getItem('sanrio_app_last_parent_role');
             if (savedParentRole === 'dad' || savedParentRole === 'mom') document.getElementById('parent-role').value = savedParentRole;
             window.updateParentAccountUI();
-            window.openProfileModal();
+            const rememberedParentRole = localStorage.getItem(parentRememberedRoleKey);
+            if (rememberedParentRole === 'dad' || rememberedParentRole === 'mom') {
+                window.isParentMode = true;
+                window.parentDisplayName = parentRoleNames[rememberedParentRole];
+                window.startParentMessageNotifications();
+                window.updateParentAccountUI();
+                const lastActive = localStorage.getItem('sanrio_app_last_active_profile');
+                const preferredProfile = window.currentProfileName && window.profileList.includes(window.currentProfileName)
+                    ? window.currentProfileName
+                    : (lastActive && window.profileList.includes(lastActive) ? lastActive : window.profileList[0]);
+                if (preferredProfile) await window.loadProfileData(preferredProfile);
+                else window.openProfileModal();
+            } else {
+                window.openProfileModal();
+            }
         };
 
         window.enableParentNotifications = async function() {
