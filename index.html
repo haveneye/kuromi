@@ -386,7 +386,7 @@
     <div id="character-unlock-modal" class="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center p-4 hidden animate-pop" style="z-index:10001">
         <div class="bg-white w-full max-w-xs rounded-3xl p-5 border-4 border-yellow-300 shadow-2xl text-center">
             <div class="text-3xl mb-1">🎉</div>
-            <p class="font-jua text-purple-500 text-xs">미션을 해내서 새로운 친구를 만났어요!</p>
+            <p class="font-jua text-purple-500 text-xs">축하해요! 새 캐릭터를 구매할 수 있어요!</p>
             <div id="unlocked-character-illustration" class="w-36 h-36 mx-auto my-3 p-2 bg-purple-50 rounded-3xl border-2 border-purple-100"></div>
             <h2 class="font-jua text-purple-900 text-lg"><span id="unlocked-character-names"></span> 해금!</h2>
             <p class="text-xs text-gray-500 mt-2">대표 캐릭터는 바뀌지 않았어요. 수집함에서 확인해보세요.</p>
@@ -535,6 +535,7 @@
             points: 0,
             activeCharacter: 'kuromi',
             unlockedCharacters: ['kuromi'],
+            availableCharacters: ['kuromi'],
             tasks: [],
             history: {},
             viewMonth: new Date()
@@ -609,6 +610,7 @@
                 window.state.points = data.points ?? window.state.points;
                 window.state.activeCharacter = data.activeCharacter || window.state.activeCharacter;
                 window.state.unlockedCharacters = data.unlockedCharacters || window.state.unlockedCharacters;
+                window.state.availableCharacters = Array.isArray(data.availableCharacters) ? data.availableCharacters : window.state.availableCharacters;
                 window.state.history = data.history || window.state.history;
 
                 const todayKey = getTodayKey();
@@ -821,6 +823,7 @@
                 window.state.points = profileData.points ?? 0;
                 window.state.activeCharacter = profileData.activeCharacter || 'kuromi';
                 window.state.unlockedCharacters = profileData.unlockedCharacters || ['kuromi'];
+                window.state.availableCharacters = Array.isArray(profileData.availableCharacters) ? profileData.availableCharacters : [...window.state.unlockedCharacters];
                 window.state.mariTasksAndChatResetV1 = profileData.mariTasksAndChatResetV1 === true;
                 if (profileData.characterUnlockResetV1 !== true) {
                     const newlyAddedCharacterIds = ['pikachu', 'squirtle', 'snorlax', 'charmander', 'eevee'];
@@ -847,11 +850,14 @@
                 window.state.points = 0;
                 window.state.activeCharacter = 'kuromi';
                 window.state.unlockedCharacters = ['kuromi'];
+                window.state.availableCharacters = ['kuromi'];
                 window.state.history = {};
                 window.state.mariTasksAndChatResetV1 = false;
             }
             window.state.characterUnlockResetV1 = true;
             window.state.characterUnlockResetV2 = true;
+            const newlyAvailableCharacters = unlockCharactersEarnedByPoints();
+            const characterAvailabilityMigrationNeeded = newlyAvailableCharacters.length > 0 || !Array.isArray(profileData?.availableCharacters);
 
             const todayKey = getTodayKey();
             const profileTaskResetKey = name === '마리'
@@ -946,7 +952,7 @@
                 console.warn('이 기기에 프로필을 저장하지 못했습니다.', error);
             }
 
-            if (cloudReadSucceeded && (!cloudData || seededDefaultTasks || characterUnlockMigrationNeeded || mariTasksAndChatResetNeeded || profileTaskResetNeeded || siwonMathTasksMigrationNeeded) && requestId === window.profileLoadRequestId) {
+            if (cloudReadSucceeded && (!cloudData || seededDefaultTasks || characterUnlockMigrationNeeded || characterAvailabilityMigrationNeeded || mariTasksAndChatResetNeeded || profileTaskResetNeeded || siwonMathTasksMigrationNeeded) && requestId === window.profileLoadRequestId) {
                 try {
                     await setDoc(profileRef, {
                         ...window.state,
@@ -1334,6 +1340,7 @@
             gridEl.innerHTML = '';
             CHARACTERS.forEach(char => {
                 const isUnlocked = window.state.unlockedCharacters.includes(char.id);
+                const isAvailable = Array.isArray(window.state.availableCharacters) && window.state.availableCharacters.includes(char.id);
                 const isActive = window.state.activeCharacter === char.id;
                 const canAfford = window.state.points >= char.cost;
 
@@ -1341,10 +1348,12 @@
                 card.className = `bg-white p-3 rounded-2xl border-2 shadow-sm flex flex-col items-center text-center relative ${isActive ? 'border-purple-500' : 'border-purple-100'}`;
                 card.innerHTML = `
                     ${isActive ? `<span class="absolute top-2 left-2 bg-purple-600 text-white text-[9px] font-jua px-2 py-0.5 rounded-full">장착중</span>` : ''}
-                    <div class="w-14 h-14 my-2 p-1 bg-purple-50 rounded-2xl ${!isUnlocked ? 'filter opacity-40 grayscale' : ''}">${getCharacterImageHtml(char.id)}</div>
+                    <div class="w-14 h-14 my-2 p-1 bg-purple-50 rounded-2xl ${!(isUnlocked || isAvailable) ? 'filter opacity-40 grayscale' : ''}">${getCharacterImageHtml(char.id)}</div>
                     <h3 class="font-jua text-xs text-gray-800 mb-1">${char.name}</h3>
                     ${isUnlocked ? `<button onclick="setActiveCharacter('${char.id}')" ${isActive ? 'disabled' : ''} class="w-full mt-1 py-1 rounded-xl font-jua text-xs ${isActive ? 'bg-purple-100 text-purple-400' : 'bg-purple-600 text-white shadow'}">${isActive ? '사용중' : '선택'}</button>` 
-                    : `<button onclick="unlockCharacter('${char.id}', ${char.cost})" ${!canAfford ? 'disabled' : ''} class="w-full mt-1 py-1 rounded-xl font-jua text-xs ${canAfford ? 'bg-pink-500 text-white shadow' : 'bg-gray-100 text-gray-400'}">${char.cost}P 해금</button>`}
+                    : isAvailable
+                        ? `<button onclick="unlockCharacter('${char.id}', ${char.cost})" ${!canAfford ? 'disabled' : ''} class="w-full mt-1 py-1 rounded-xl font-jua text-xs ${canAfford ? 'bg-pink-500 text-white shadow' : 'bg-gray-100 text-gray-400'}">${canAfford ? `${char.cost}P 구매하기` : `${char.cost}P 필요`}</button>`
+                        : `<button disabled class="w-full mt-1 py-1 rounded-xl font-jua text-xs bg-gray-100 text-gray-400">${char.cost}P 달성 시 해금</button>`}
                 `;
                 gridEl.appendChild(card);
             });
@@ -1379,18 +1388,18 @@
 
         function unlockCharactersEarnedByPoints() {
             const newlyUnlocked = [];
-            let nextCharacter = CHARACTERS
-                .filter(character => character.cost > 0 && !window.state.unlockedCharacters.includes(character.id))
-                .sort((a, b) => a.cost - b.cost)[0];
-
-            while (nextCharacter && window.state.points >= nextCharacter.cost) {
-                window.state.points -= nextCharacter.cost;
-                window.state.unlockedCharacters.push(nextCharacter.id);
-                newlyUnlocked.push(nextCharacter);
-                nextCharacter = CHARACTERS
-                    .filter(character => character.cost > 0 && !window.state.unlockedCharacters.includes(character.id))
-                    .sort((a, b) => a.cost - b.cost)[0];
+            if (!Array.isArray(window.state.availableCharacters)) {
+                window.state.availableCharacters = [...(window.state.unlockedCharacters || ['kuromi'])];
             }
+            CHARACTERS
+                .filter(character => character.cost > 0 &&
+                    window.state.points >= character.cost &&
+                    !window.state.unlockedCharacters.includes(character.id) &&
+                    !window.state.availableCharacters.includes(character.id))
+                .forEach(character => {
+                    window.state.availableCharacters.push(character.id);
+                    newlyUnlocked.push(character);
+                });
             return newlyUnlocked;
         }
 
@@ -1466,6 +1475,7 @@
             const changed = Math.abs(after - before);
             if (!changed) { showToast('차감할 포인트가 없어요.'); return; }
             window.state.points = after;
+            const newlyAvailableCharacters = direction > 0 ? unlockCharactersEarnedByPoints() : [];
             await syncToOnlineCloud();
             renderHeader();
             renderTasks();
@@ -1473,6 +1483,7 @@
             window.renderParentChildSelector();
             window.closePointsAdjustModal();
             showToast(window.currentProfileName + '에게 ' + (direction > 0 ? '+' : '−') + changed + 'P 조정했어요.');
+            if (newlyAvailableCharacters.length) window.showUnlockCelebration(newlyAvailableCharacters);
         };
 
         window.openAddTaskModal = function() {
@@ -1532,6 +1543,10 @@
 
         window.unlockCharacter = function(charId, cost) {
             if (window.state.unlockedCharacters.includes(charId)) { window.setActiveCharacter(charId); return; }
+            if (!Array.isArray(window.state.availableCharacters) || !window.state.availableCharacters.includes(charId)) {
+                showToast('🔒 먼저 필요한 포인트를 모아 캐릭터를 해금해주세요.');
+                return;
+            }
             if (window.state.points < cost) { showToast("🔒 포인트가 부족해요! "); return; }
             window.state.points -= cost;
             window.state.unlockedCharacters.push(charId);
@@ -1541,10 +1556,14 @@
             renderShop();
             celebrateCharacterUnlock();
             const character = CHARACTERS.find(item => item.id === charId);
-            showToast('🎆 ' + (character ? character.name : '새 캐릭터') + ' 해금됐어요!');
+            showToast('🎆 ' + (character ? character.name : '새 캐릭터') + ' 구매 완료!');
         };
 
         window.setActiveCharacter = function(charId) {
+            if (!window.state.unlockedCharacters.includes(charId)) {
+                showToast('먼저 캐릭터를 구매해주세요.');
+                return;
+            }
             window.state.activeCharacter = charId;
             syncToOnlineCloud();
             renderHeader();
