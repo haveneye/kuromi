@@ -486,6 +486,7 @@
             { title: '한글책 5권 읽기', points: 20 },
             { title: '줄넘기 100개', points: 10 },
             { title: '피아노 30분 연습', points: 30 },
+            { title: '벌점', points: -30 },
             { title: '꿈수레', points: 10 }
         ];
 
@@ -503,6 +504,7 @@
             { title: '청크북', points: 30 },
             { title: '영어단어 외우기', points: 10 },
             { title: '영어글쓰기', points: 20 },
+            { title: '벌점', points: -30 },
             { title: '꿈수레', points: 10 }
         ];
 
@@ -825,6 +827,7 @@
                 window.state.activeCharacter = profileData.activeCharacter || 'kuromi';
                 window.state.unlockedCharacters = profileData.unlockedCharacters || ['kuromi'];
                 window.state.availableCharacters = Array.isArray(profileData.availableCharacters) ? profileData.availableCharacters : [...window.state.unlockedCharacters];
+                window.state.penaltyTaskDefaultV1 = profileData.penaltyTaskDefaultV1 === true;
                 window.state.mariTasksAndChatResetV1 = profileData.mariTasksAndChatResetV1 === true;
                 if (profileData.characterUnlockResetV1 !== true) {
                     const newlyAddedCharacterIds = ['pikachu', 'squirtle', 'snorlax', 'charmander', 'eevee'];
@@ -853,6 +856,7 @@
                 window.state.unlockedCharacters = ['kuromi'];
                 window.state.availableCharacters = ['kuromi'];
                 window.state.history = {};
+                window.state.penaltyTaskDefaultV1 = false;
                 window.state.mariTasksAndChatResetV1 = false;
             }
             window.state.characterUnlockResetV1 = true;
@@ -960,6 +964,22 @@
                 window.state.siwonGitanMathTaskUpdatedV1 = true;
                 siwonGitanMathTaskMigrationNeeded = true;
             }
+            let penaltyTaskMigrationNeeded = false;
+            if ((name === '마리' || isSiwonProfile(name)) && !window.state.penaltyTaskDefaultV1) {
+                const currentDay = window.state.history[todayKey];
+                const hasPenaltyTask = currentDay.tasks.some(task => task.title === '벌점');
+                window.state.history[todayKey] = {
+                    ...currentDay,
+                    tasks: hasPenaltyTask ? currentDay.tasks : [...currentDay.tasks, {
+                        id: 'task_' + Date.now() + '_penalty',
+                        title: '벌점',
+                        points: -30,
+                        completed: false
+                    }]
+                };
+                window.state.penaltyTaskDefaultV1 = true;
+                penaltyTaskMigrationNeeded = true;
+            }
             window.state.tasks = window.state.history[todayKey].tasks;
 
             try {
@@ -969,7 +989,7 @@
                 console.warn('이 기기에 프로필을 저장하지 못했습니다.', error);
             }
 
-            if (cloudReadSucceeded && (!cloudData || seededDefaultTasks || characterUnlockMigrationNeeded || characterAvailabilityMigrationNeeded || mariTasksAndChatResetNeeded || profileTaskResetNeeded || siwonMathTasksMigrationNeeded || siwonGitanMathTaskMigrationNeeded) && requestId === window.profileLoadRequestId) {
+            if (cloudReadSucceeded && (!cloudData || seededDefaultTasks || characterUnlockMigrationNeeded || characterAvailabilityMigrationNeeded || mariTasksAndChatResetNeeded || profileTaskResetNeeded || siwonMathTasksMigrationNeeded || siwonGitanMathTaskMigrationNeeded || penaltyTaskMigrationNeeded) && requestId === window.profileLoadRequestId) {
                 try {
                     await setDoc(profileRef, {
                         ...window.state,
@@ -1327,6 +1347,11 @@
             document.getElementById('today-date-text').innerText = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${days[now.getDay()]})`;
         }
 
+        function formatTaskPoints(points) {
+            const value = points == null || !Number.isFinite(Number(points)) ? 10 : Number(points);
+            return `${value > 0 ? '+' : ''}${value}P`;
+        }
+
         function renderTasks() {
             const listEl = document.getElementById('task-list');
             listEl.innerHTML = '';
@@ -1344,7 +1369,7 @@
                         <span class="text-xs font-dodum truncate ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">${escapeHtml(task.title)}</span>
                     </div>
                     <div class="flex items-center space-x-1.5">
-                        <span class="text-[10px] font-jua px-2 py-0.5 rounded-full ${task.completed ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-800'}">+${task.points || 10}P</span>
+                        <span class="text-[10px] font-jua px-2 py-0.5 rounded-full ${task.points < 0 ? 'bg-red-100 text-red-700' : task.completed ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-800'}">${formatTaskPoints(task.points)}</span>
                         <button onclick="deleteTask('${task.id}')" class="text-gray-300 hover:text-red-400 text-xs p-1"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 `;
@@ -1424,20 +1449,22 @@
             const task = window.state.tasks.find(t => t.id === id);
             if (!task) return;
             task.completed = !task.completed;
-            const pts = task.points || 10;
+            const pts = task.points ?? 10;
             let newlyUnlocked = [];
             if (task.completed) {
                 window.state.points += pts;
-                newlyUnlocked = unlockCharactersEarnedByPoints();
-                if (newlyUnlocked.length) {
+                newlyUnlocked = pts > 0 ? unlockCharactersEarnedByPoints() : [];
+                if (pts < 0) {
+                    showToast(`⚠️ 벌점 ${pts}P가 적용됐어요.`);
+                } else if (newlyUnlocked.length) {
                     celebrateCharacterUnlock();
                 } else {
                     if (typeof confetti === 'function') confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
-                    showToast(`🎉 +${pts} 포인트 획득!`);
+                    showToast(`🎉 ${formatTaskPoints(pts)} 획득!`);
                 }
             } else {
                 window.state.points = Math.max(0, window.state.points - pts);
-                showToast(`⚡ 포인트가 차감되었습니다.`);
+                showToast(pts < 0 ? `✅ 벌점 취소로 ${Math.abs(pts)}P 복구됐어요.` : `⚡ 포인트가 차감되었습니다.`);
             }
             syncToOnlineCloud();
             renderHeader();
@@ -1681,7 +1708,7 @@
                 });
                 dateTitle.innerText = dateKey + ' 완료 미션';
                 const points = completed.reduce((sum, row) => sum + (row.task.points || 10), 0);
-                datePoints.innerText = '완료 ' + completed.length + '개 · +' + points + 'P';
+                datePoints.innerText = '완료 ' + completed.length + '개 · ' + formatTaskPoints(points);
                 taskList.replaceChildren();
                 if (!completed.length) {
                     taskList.innerHTML = '<li class="text-center py-3 text-gray-400 font-jua">완료한 미션이 없어요.</li>';
@@ -1699,7 +1726,7 @@
                     title.textContent = row.task.title;
                     const reward = document.createElement('span');
                     reward.className = 'text-[9px] font-jua ml-2 shrink-0';
-                    reward.textContent = '+' + (row.task.points || 10) + 'P';
+                    reward.textContent = formatTaskPoints(row.task.points);
                     item.append(child, title, reward);
                     taskList.appendChild(item);
                 });
@@ -1717,7 +1744,7 @@
 
             const completedTasks = dayLog.tasks.filter(task => task.completed);
             const earnedPoints = completedTasks.reduce((sum, task) => sum + (task.points || 10), 0);
-            datePoints.innerText = '완료 ' + completedTasks.length + '/' + dayLog.tasks.length + '개 (+' + earnedPoints + 'P)';
+            datePoints.innerText = '완료 ' + completedTasks.length + '/' + dayLog.tasks.length + '개 (' + formatTaskPoints(earnedPoints) + ')';
             taskList.replaceChildren();
             dayLog.tasks.forEach(task => {
                 const item = document.createElement('li');
@@ -1728,7 +1755,7 @@
                 label.textContent = task.title;
                 const reward = document.createElement('span');
                 reward.className = 'text-[9px] font-jua px-1.5 py-0.2 bg-purple-200/60 rounded text-purple-800';
-                reward.textContent = '+' + (task.points || 10) + 'P';
+                reward.textContent = formatTaskPoints(task.points);
                 const status = document.createElement('span');
                 status.className = 'font-jua text-[10px] ml-2 ' + (task.completed ? 'text-purple-600' : 'text-gray-400');
                 status.textContent = task.completed ? '완료 ✨' : '미완료';
