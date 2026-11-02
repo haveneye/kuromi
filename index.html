@@ -495,6 +495,7 @@
             { title: '수학 10문제', points: 10 },
             { title: '수학 10문제', points: 10 },
             { title: '수학 10문제', points: 10 },
+            { title: '기탄수학풀기', points: 10 },
             { title: '수학완료', points: 10 },
             { title: '영어리뷰', points: 30 },
             { title: '책읽기', points: 20 },
@@ -943,6 +944,22 @@
                 window.state.siwonMathTasksUpdatedV1 = true;
                 siwonMathTasksMigrationNeeded = true;
             }
+            let siwonGitanMathTaskMigrationNeeded = false;
+            if (isSiwonProfile(name) && !window.state.siwonGitanMathTaskUpdatedV1) {
+                const currentDay = window.state.history[todayKey];
+                const hasGitanMathTask = currentDay.tasks.some(task => task.title === '기탄수학풀기');
+                window.state.history[todayKey] = {
+                    ...currentDay,
+                    tasks: hasGitanMathTask ? currentDay.tasks : [...currentDay.tasks, {
+                        id: 'task_' + Date.now() + '_siwon_gitans_math',
+                        title: '기탄수학풀기',
+                        points: 10,
+                        completed: false
+                    }]
+                };
+                window.state.siwonGitanMathTaskUpdatedV1 = true;
+                siwonGitanMathTaskMigrationNeeded = true;
+            }
             window.state.tasks = window.state.history[todayKey].tasks;
 
             try {
@@ -952,7 +969,7 @@
                 console.warn('이 기기에 프로필을 저장하지 못했습니다.', error);
             }
 
-            if (cloudReadSucceeded && (!cloudData || seededDefaultTasks || characterUnlockMigrationNeeded || characterAvailabilityMigrationNeeded || mariTasksAndChatResetNeeded || profileTaskResetNeeded || siwonMathTasksMigrationNeeded) && requestId === window.profileLoadRequestId) {
+            if (cloudReadSucceeded && (!cloudData || seededDefaultTasks || characterUnlockMigrationNeeded || characterAvailabilityMigrationNeeded || mariTasksAndChatResetNeeded || profileTaskResetNeeded || siwonMathTasksMigrationNeeded || siwonGitanMathTaskMigrationNeeded) && requestId === window.profileLoadRequestId) {
                 try {
                     await setDoc(profileRef, {
                         ...window.state,
